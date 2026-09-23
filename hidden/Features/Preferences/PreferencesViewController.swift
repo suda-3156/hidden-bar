@@ -31,6 +31,7 @@ class PreferencesViewController: NSViewController {
     @IBOutlet weak var checkBoxShowPreferences: NSButton!
     @IBOutlet weak var checkBoxShowAlwaysHiddenSection: NSButton!
     
+    @IBOutlet weak var checkBoxHoverToExpand: NSButton!
     @IBOutlet weak var checkBoxUseFullStatusbar: NSButton!
     @IBOutlet weak var timePopup: NSPopUpButton!
     
@@ -103,6 +104,10 @@ class PreferencesViewController: NSViewController {
     @IBAction func useFullStatusBarOnExpandChanged(_ sender: NSButton) {
         Preferences.useFullStatusBarOnExpandEnabled = sender.state == .on
     }
+
+    @IBAction func hoverToExpandCheckChanged(_ sender: NSButton) {
+        Preferences.hoverToExpand = sender.state == .on
+    }
     
     
     @IBAction func timePopupDidSelected(_ sender: NSPopUpButton) {
@@ -173,6 +178,7 @@ class PreferencesViewController: NSViewController {
     
     @objc private func updateData(){
         checkBoxUseFullStatusbar.state = Preferences.useFullStatusBarOnExpandEnabled ? .on : .off
+        checkBoxHoverToExpand.state = Preferences.hoverToExpand ? .on : .off
         checkBoxLogin.state = Preferences.isAutoStart ? .on : .off
         checkBoxAutoHide.state = Preferences.isAutoHide ? .on : .off
         checkBoxShowPreferences.state = Preferences.isShowPreference ? .on : .off

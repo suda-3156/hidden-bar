@@ -74,9 +74,10 @@ class StatusBarController: MenuBarItemProvider {
         setupUI()
         restoreRemovedStatusItems()
         setupAlwayHideStatusBar()
-        setupHoverToExpandIfEnabled()
+        applyHoverToExpand()
         NotificationCenter.default.addObserver(self, selector: #selector(handleScreenParametersChanged), name: NSApplication.didChangeScreenParametersNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateAutoHide), name: .prefsChanged, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(applyHoverToExpand), name: .prefsChanged, object: nil)
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             self?.collapseMenuBar()
         }
@@ -93,10 +94,21 @@ class StatusBarController: MenuBarItemProvider {
         }
     }
 
-    // Opt-in via `defaults write com.dwarvesv.minimalbar hoverToExpand -bool true`.
-    // No monitor is installed at all unless the pref is true at launch.
-    private func setupHoverToExpandIfEnabled() {
-        guard Preferences.hoverToExpand else { return }
+    // Opt-in from Preferences (or the hoverToExpand default). The global monitor
+    // exists only while the pref is on, so turning it off costs nothing. Runs on
+    // every prefsChanged, hence idempotent in both directions.
+    @objc private func applyHoverToExpand() {
+        guard Preferences.hoverToExpand else {
+            hoverDwellTimer?.invalidate()
+            hoverDwellTimer = nil
+            if let monitor = hoverMonitor {
+                NSEvent.removeMonitor(monitor)
+                hoverMonitor = nil
+                NSLog("HoverToExpand: disabled, removed global mouse monitor")
+            }
+            return
+        }
+        guard hoverMonitor == nil else { return }
         NSLog("HoverToExpand: enabled, installing global mouse monitor")
         hoverMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] _ in
             guard let self = self else { return }

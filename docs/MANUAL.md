@@ -38,6 +38,7 @@ section is enabled.
 | Global shortcut | System-wide expand/collapse hotkey (F-keys display as F18, not Fn18) |
 | Enable always hidden section | A second zone whose icons stay hidden even when expanded; revealed by option-clicking the arrow |
 | Use full menu bar on expanding | App becomes briefly "regular" while expanded (helps on tight menubars) |
+| Expand when the pointer rests on the menu bar | Resting the pointer in the menu bar for ~0.5s expands a collapsed bar; auto collapse then behaves normally |
 
 > **Always-hidden section, current behavior:** items in the always-hidden zone
 > are reliably pushed off-screen only when "hide separators" is also on
@@ -62,9 +63,6 @@ section is enabled.
 All via `defaults`; quit and relaunch the app after changing them.
 
 ```sh
-# expand by hovering the menu bar for ~0.5s (off by default)
-defaults write com.dwarvesv.minimalbar hoverToExpand -bool true
-
 # auto-collapse delay in seconds (the UI offers a fixed list; any value works)
 defaults write com.dwarvesv.minimalbar numberOfSecondForAutoHide -float 5
 

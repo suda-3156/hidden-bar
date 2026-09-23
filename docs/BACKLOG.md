@@ -43,8 +43,6 @@ math, collapse state machine) are HIGH RISK and require a mandatory review-team 
   one-shot `SMLoginItemSetEnabled(..., false)` deauth was added but never run on hardware).
 - **AXPress accessibility defect.** VoiceOver users cannot toggle the bar: the arrow's
   `AXPress` handler reads `NSApp.currentEvent`, which is nil under assistive synthesis.
-- **`hoverToExpand` Preferences checkbox.** Shipped as a Terminal-only `defaults write`;
-  add a proper checkbox in `PreferencesViewController`.
 - **Surface the `SMAppService` error contract in the prefs UI.** On `register()` failure
   (unsigned build, or user denies in System Settings), the checkbox stays on while the
   system says off; the error is swallowed into NSLog. Fix when the prefs UI is next touched.

@@ -657,6 +657,16 @@ between sections to configure Hidden Bar.</string>
                                                     <action selector="useFullStatusBarOnExpandChanged:" target="XfG-lQ-9wD" id="kh2-cl-DOH"/>
                                                 </connections>
                                             </button>
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Hvr-Ex-Bx1" userLabel="Check Box Hover To Expand">
+                                                <rect key="frame" x="-2" y="38" width="238" height="18"/>
+                                                <buttonCell key="cell" type="check" title="Expand when the pointer rests on the menu bar" bezelStyle="regularSquare" imagePosition="left" inset="2" id="Hvr-Ex-Cl1">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="hoverToExpandCheckChanged:" target="XfG-lQ-9wD" id="Hvr-Ex-Ac1"/>
+                                                </connections>
+                                            </button>
                                             <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nE7-aX-FH9">
                                                 <rect key="frame" x="0.0" y="35" width="230" height="20"/>
                                                 <subviews>
@@ -773,8 +783,10 @@ between sections to configure Hidden Bar.</string>
                                             <integer value="1000"/>
                                             <integer value="1000"/>
                                             <integer value="1000"/>
+                                            <integer value="1000"/>
                                         </visibilityPriorities>
                                         <customSpacing>
+                                            <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
@@ -873,6 +885,7 @@ between sections to configure Hidden Bar.</string>
                         <outlet property="btnClear" destination="D4j-NZ-37N" id="2yc-ze-q1e"/>
                         <outlet property="btnShortcut" destination="yKf-P1-I45" id="AFr-y7-VbP"/>
                         <outlet property="checkBoxAutoHide" destination="gj1-Ms-4No" id="Ibl-5H-2vh"/>
+                        <outlet property="checkBoxHoverToExpand" destination="Hvr-Ex-Bx1" id="Hvr-Ex-Ot1"/>
                         <outlet property="checkBoxLogin" destination="cbR-Jv-adm" id="DFO-De-0KU"/>
                         <outlet property="checkBoxNotchOverflow" destination="Ntc-Ov-Bx1" id="Ntc-Ov-Ot1"/>
                         <outlet property="checkBoxShowAlwaysHiddenSection" destination="yaS-iD-h7g" id="T5N-bN-yl2"/>

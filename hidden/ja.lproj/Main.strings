@@ -206,6 +206,9 @@
 /* Class = "NSButtonCell"; title = "Use the full MenuBar on expanding"; ObjectID = "8z8-6N-wnc"; */
 "8z8-6N-wnc.title" = "アイコンを表示する時に Hidden のメニューバーも表示";
 
+/* Class = "NSButtonCell"; title = "Expand when the pointer rests on the menu bar"; ObjectID = "Hvr-Ex-Cl1"; */
+"Hvr-Ex-Cl1.title" = "メニューバーにポインタを置いたらアイコンを表示";
+
 /* Class = "NSMenuItem"; title = "\tDefault"; ObjectID = "Nop-cj-93Q"; */
 "Nop-cj-93Q.title" = "\tDefault";
 
