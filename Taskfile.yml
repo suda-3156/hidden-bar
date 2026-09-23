@@ -1,0 +1,130 @@
+version: '3'
+
+# Machine-local signing configuration. A missing file is not an error: the vars
+# below then fall back to ad-hoc signing. See .env.example.
+dotenv: ['.env.local']
+
+vars:
+  PROJECT: Hidden Bar.xcodeproj
+  # The direct (non-App Store) build: unsandboxed, and the only one that can
+  # hide on macOS 27. Its configurations are Debug-Direct and Release-Direct;
+  # plain Debug and Release belong to the App Store scheme.
+  SCHEME: Hidden Bar
+  APP_NAME: Hidden Bar.app
+  PROCESS_NAME: Hidden Bar
+  INSTALL_DIR: /Applications
+  # No -derivedDataPath: Xcode's own DerivedData location is used, which keeps
+  # build output out of the working tree and shares it with Xcode.app. The path
+  # is therefore not predictable and has to be asked for; PRODUCTS_DIR does that.
+  SHOW_BUILD_SETTINGS: xcodebuild -project "Hidden Bar.xcodeproj" -scheme "Hidden Bar" -showBuildSettings
+  # Upstream ships DEVELOPMENT_TEAM = W777S7V8TN, which this machine cannot sign
+  # with. Overriding on the command line keeps project.pbxproj identical to
+  # upstream, so it merges cleanly. "-" is ad-hoc signing, the fallback when
+  # .env.local says nothing.
+  SIGN_IDENTITY: '{{.HB_CODE_SIGN_IDENTITY | default "-"}}'
+  SIGN_TEAM: '{{.HB_DEVELOPMENT_TEAM | default ""}}'
+  SIGN_ARGS: >-
+    CODE_SIGN_STYLE=Manual
+    DEVELOPMENT_TEAM={{.SIGN_TEAM}}
+    CODE_SIGN_IDENTITY="{{.SIGN_IDENTITY}}"
+    PROVISIONING_PROFILE_SPECIFIER=
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true
+
+  signing:
+    desc: Show the code signing identity the build tasks will use
+    cmds:
+      - cmd: |
+          echo "identity: {{.SIGN_IDENTITY}}"
+          echo "team:     {{.SIGN_TEAM}}"
+          test -f .env.local && echo "source:   .env.local" || echo "source:   built-in fallback (ad-hoc)"
+        silent: true
+
+  deps:
+    desc: Resolve the Swift Package Manager dependencies
+    cmds:
+      - xcodebuild -project "{{.PROJECT}}" -resolve-package-dependencies
+
+  build:
+    desc: Build the Debug-Direct configuration
+    cmds:
+      - task: xcodebuild
+        vars: { CONFIGURATION: Debug-Direct }
+
+  build:release:
+    desc: Build the Release-Direct configuration
+    cmds:
+      - task: xcodebuild
+        vars: { CONFIGURATION: Release-Direct }
+
+  xcodebuild:
+    internal: true
+    requires:
+      vars: [CONFIGURATION]
+    vars:
+      PRODUCTS_DIR:
+        sh: '{{.SHOW_BUILD_SETTINGS}} -configuration {{.CONFIGURATION}} | awk -F'' = '' ''/ BUILT_PRODUCTS_DIR = /{print $2; exit}'''
+    cmds:
+      - >-
+        xcodebuild
+        -project "{{.PROJECT}}"
+        -scheme "{{.SCHEME}}"
+        -configuration {{.CONFIGURATION}}
+        {{.SIGN_ARGS}}
+        build
+      - cmd: echo "Built {{.CONFIGURATION}}:{{"\t"}}{{.PRODUCTS_DIR}}/{{.APP_NAME}}"
+        silent: true
+
+  test:
+    desc: Run the unit tests (HiddenBarTests and HiddenTests)
+    cmds:
+      - >-
+        xcodebuild
+        -project "{{.PROJECT}}"
+        -scheme "{{.SCHEME}}"
+        {{.SIGN_ARGS}}
+        test
+
+  lint:strings:
+    desc: Check that every localization table still parses
+    cmds:
+      - plutil -lint hidden/*.lproj/*.strings
+
+  run:
+    desc: Build and launch the Debug-Direct build in place
+    deps: [build]
+    vars:
+      PRODUCTS_DIR:
+        sh: '{{.SHOW_BUILD_SETTINGS}} -configuration Debug-Direct | awk -F'' = '' ''/ BUILT_PRODUCTS_DIR = /{print $2; exit}'''
+    cmds:
+      - task: quit
+      - open "{{.PRODUCTS_DIR}}/{{.APP_NAME}}"
+
+  install:
+    desc: Replace the app in /Applications with a local Release-Direct build
+    prompt: Replace {{.INSTALL_DIR}}/{{.APP_NAME}} with the local Release-Direct build?
+    deps: [build:release]
+    vars:
+      PRODUCTS_DIR:
+        sh: '{{.SHOW_BUILD_SETTINGS}} -configuration Release-Direct | awk -F'' = '' ''/ BUILT_PRODUCTS_DIR = /{print $2; exit}'''
+    cmds:
+      - task: quit
+      - rm -rf "{{.INSTALL_DIR}}/{{.APP_NAME}}"
+      - ditto "{{.PRODUCTS_DIR}}/{{.APP_NAME}}" "{{.INSTALL_DIR}}/{{.APP_NAME}}"
+      - open "{{.INSTALL_DIR}}/{{.APP_NAME}}"
+
+  quit:
+    desc: Quit a running Hidden Bar
+    cmds:
+      - cmd: pkill -x "{{.PROCESS_NAME}}"
+        ignore_error: true
+
+  clean:
+    desc: Remove the build products of both Direct configurations
+    cmds:
+      - xcodebuild -project "{{.PROJECT}}" -scheme "{{.SCHEME}}" -configuration Debug-Direct clean
+      - xcodebuild -project "{{.PROJECT}}" -scheme "{{.SCHEME}}" -configuration Release-Direct clean

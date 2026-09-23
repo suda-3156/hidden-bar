@@ -137,3 +137,9 @@ DerivedData/
 /docs/specs/
 /docs/implementation-notes/
 /.planning/
+
+# Environment
+.env
+.env.*
+!.env.example
+.direnv/
