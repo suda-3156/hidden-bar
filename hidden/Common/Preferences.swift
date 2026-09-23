@@ -17,6 +17,15 @@ enum Preferences {
         }
         
         set {
+            // Encoding nil writes the 4-byte JSON literal "null", which the getter
+            // then fails to decode and reports as nil. That works, but it leaves a
+            // stale blob in the domain; drop the key instead so "no shortcut" is
+            // the absence of a value.
+            guard let newValue = newValue else {
+                UserDefaults.standard.removeObject(forKey: UserDefaults.Key.globalKey)
+                NotificationCenter.default.post(Notification(name: .prefsChanged))
+                return
+            }
             guard let data = try? JSONEncoder().encode(newValue) else { return }
             UserDefaults.standard.set(data, forKey: UserDefaults.Key.globalKey)
             
