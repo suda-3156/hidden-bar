@@ -62,6 +62,7 @@ final class NativeVisibilityEngine: MenuBarEngine {
     private let inventory: MenuBarInventoryProviding
     private let visibility: NativeVisibilityProviding
     private let captureActivity: CaptureActivityMonitoring
+    private let systemOverflow: SystemOverflowRevealing
     private let ownBundleIdentifier: String?
     private let itemFrame: (NSStatusItem) -> CGRect?
     private let isLTR: () -> Bool
@@ -88,6 +89,7 @@ final class NativeVisibilityEngine: MenuBarEngine {
          inventory: MenuBarInventoryProviding = AccessibilityMenuBarInventory(),
          visibility: NativeVisibilityProviding = NativeVisibilityBridge(),
          captureActivity: CaptureActivityMonitoring = CaptureActivityMonitor(),
+         systemOverflow: SystemOverflowRevealing = SystemOverflowButton(),
          ownBundleIdentifier: String? = Bundle.main.bundleIdentifier,
          itemFrame: @escaping (NSStatusItem) -> CGRect? = { $0.button?.window?.frame },
          isLTR: @escaping () -> Bool = { Constant.isUsingLTRLanguage }) {
@@ -95,6 +97,7 @@ final class NativeVisibilityEngine: MenuBarEngine {
         self.inventory = inventory
         self.visibility = visibility
         self.captureActivity = captureActivity
+        self.systemOverflow = systemOverflow
         self.ownBundleIdentifier = ownBundleIdentifier
         self.itemFrame = itemFrame
         self.isLTR = isLTR
@@ -178,6 +181,16 @@ final class NativeVisibilityEngine: MenuBarEngine {
         arrowHiddenWhenCollapsed = hidden
         if state == .collapsed {
             restorePresentation()
+        }
+    }
+
+    // The overflow button only exists once macOS has reflowed the expanded bar,
+    // which it does on its own time; the press is dropped if the bar was
+    // collapsed again in the meantime.
+    func revealSystemOverflow() {
+        guard state == .expanded else { return }
+        systemOverflow.reveal { [weak self] in
+            self?.state == .expanded
         }
     }
 

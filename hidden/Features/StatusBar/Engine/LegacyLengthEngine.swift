@@ -73,6 +73,9 @@ final class LegacyLengthEngine: MenuBarEngine {
     // autosaved slot (isVisible = false).
     func updateArrowHidden(whenCollapsed hidden: Bool) {}
 
+    // macOS <= 26 has no overflow: icons that do not fit are just not drawn.
+    func revealSystemOverflow() {}
+
     // The separator is what widens, so it must sit between the hidden icons and
     // the arrow, and the always-hidden separator further out still.
     var isArrangementValid: Bool {

@@ -24,6 +24,11 @@ protocol MenuBarEngine: AnyObject {
     // Preferences row only shows where MenuBarEngineFactory.canHideArrow.
     func updateArrowHidden(whenCollapsed hidden: Bool)
 
+    // Also shows the icons that did not fit beside the notch, where macOS offers
+    // its own overflow for them. Only meaningful while expanded; engines on a
+    // system without that overflow ignore it.
+    func revealSystemOverflow()
+
     // Whether the user's ⌘-drag arrangement lets the engine hide anything: its
     // hiding boundary must sit on the hidden side of the arrow. The controller
     // does not collapse otherwise.

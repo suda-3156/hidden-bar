@@ -33,6 +33,11 @@ section is enabled.
   Expand with the global shortcut or by resting the pointer on the menu bar,
   and right-click the arrow once it is back. The option only applies while one
   of those two is set: clearing the last one brings the arrow back at once.
+- **Press the global shortcut twice quickly** to expand and also open the
+  `<<` button macOS shows when icons do not fit beside the notch. Hidden Bar
+  clicks that button for you with a synthesized click (macOS offers no other
+  way to open it), which can close a menu that is open at that moment.
+  Nothing more happens when everything fits.
 
 #### While collapsed (macOS limitation, #437)
 

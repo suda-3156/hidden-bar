@@ -29,3 +29,25 @@ enum ExpandCollapseActionResolver {
         }
     }
 }
+
+// Tells a double press of the global shortcut from two single ones. The first
+// press still acts at once, so a single press is never delayed; the second
+// counts as a double press only within `interval` of the first, and does not
+// start another pair.
+struct ShortcutDoublePressDetector {
+    let interval: TimeInterval
+    private var pendingPress: Date?
+
+    init(interval: TimeInterval) {
+        self.interval = interval
+    }
+
+    mutating func isDoublePress(at date: Date) -> Bool {
+        if let pending = pendingPress, date.timeIntervalSince(pending) <= interval {
+            pendingPress = nil
+            return true
+        }
+        pendingPress = date
+        return false
+    }
+}

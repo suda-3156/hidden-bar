@@ -97,6 +97,14 @@ private final class FakeCaptureActivity: CaptureActivityMonitoring {
     }
 }
 
+private final class FakeSystemOverflow: SystemOverflowRevealing {
+    var pendingPresses: [() -> Bool] = []
+
+    func reveal(if shouldPress: @escaping () -> Bool) {
+        pendingPresses.append(shouldPress)
+    }
+}
+
 private func item(_ bundle: String?, x: CGFloat, width: CGFloat = 24) -> MenuBarInventoryItem {
     return MenuBarInventoryItem(bundleIdentifier: bundle, frame: CGRect(x: x, y: 0, width: width, height: 24))
 }
@@ -169,6 +177,7 @@ final class NativeVisibilityEngineTests: XCTestCase {
     private var inventory: FakeInventory!
     private var visibility: FakeVisibility!
     private var capture: FakeCaptureActivity!
+    private var systemOverflow: FakeSystemOverflow!
 
     override func setUp() {
         super.setUp()
@@ -177,12 +186,14 @@ final class NativeVisibilityEngineTests: XCTestCase {
         inventory.items = [item("com.always", x: 900), item("com.hidden", x: 1100), item("com.visible", x: 1400)]
         visibility = FakeVisibility()
         capture = FakeCaptureActivity()
+        systemOverflow = FakeSystemOverflow()
     }
 
     private func makeEngine() -> NativeVisibilityEngine {
         let items = self.items!
         return NativeVisibilityEngine(items: items, inventory: inventory, visibility: visibility,
                                       captureActivity: capture,
+                                      systemOverflow: systemOverflow,
                                       ownBundleIdentifier: "com.dwarvesv.minimalbar",
                                       itemFrame: { $0 === items.toggleItem ? separator : alwaysHiddenSeparator },
                                       isLTR: { true })
@@ -461,6 +472,28 @@ final class NativeVisibilityEngineTests: XCTestCase {
         capture.set(false)
         XCTAssertFalse(collapsed.isInvalidated)
         XCTAssertEqual(visibility.requests.count, 1)
+    }
+
+    func testSystemOverflowIsOnlyRevealedWhileExpanded() {
+        let engine = makeEngine()
+        engine.collapse { _ in }
+        engine.revealSystemOverflow()
+        XCTAssertTrue(systemOverflow.pendingPresses.isEmpty, "nothing overflows while the hidden section is hidden")
+
+        visibility.succeed(0)
+        engine.expand()
+        engine.revealSystemOverflow()
+        XCTAssertEqual(systemOverflow.pendingPresses.count, 1)
+        XCTAssertTrue(systemOverflow.pendingPresses[0]())
+    }
+
+    func testCollapsingBeforeTheButtonAppearsDropsThePress() {
+        let engine = makeEngine()
+        engine.revealSystemOverflow()
+        engine.collapse { _ in }
+        XCTAssertFalse(systemOverflow.pendingPresses[0](), "a collapse in flight must not be undone by the press")
+        visibility.succeed(0)
+        XCTAssertFalse(systemOverflow.pendingPresses[0]())
     }
 }
 

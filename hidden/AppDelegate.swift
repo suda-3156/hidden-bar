@@ -21,7 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate{
             guard let hotKey = hotKey else { return }
 
             hotKey.keyDownHandler = { [weak self] in
-                self?.statusBarController.expandCollapseIfNeeded()
+                self?.statusBarController.handleShortcutPress()
             }
         }
     }
