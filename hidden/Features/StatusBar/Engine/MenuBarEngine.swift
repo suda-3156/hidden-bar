@@ -19,6 +19,11 @@ protocol MenuBarEngine: AnyObject {
 
     func updateAlwaysHiddenSection(enabled: Bool, separatorHidden: Bool)
 
+    // Whether the arrow is hidden along with the hidden section while collapsed.
+    // Engines that cannot hide it without losing its slot ignore this; the
+    // Preferences row only shows where MenuBarEngineFactory.canHideArrow.
+    func updateArrowHidden(whenCollapsed hidden: Bool)
+
     // Whether the user's ⌘-drag arrangement lets the engine hide anything: its
     // hiding boundary must sit on the hidden side of the arrow. The controller
     // does not collapse otherwise.

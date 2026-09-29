@@ -32,6 +32,7 @@ class PreferencesViewController: NSViewController {
     @IBOutlet weak var checkBoxShowAlwaysHiddenSection: NSButton!
     
     @IBOutlet weak var checkBoxHoverToExpand: NSButton!
+    @IBOutlet weak var checkBoxHideArrowWhenCollapsed: NSButton!
     @IBOutlet weak var checkBoxUseFullStatusbar: NSButton!
     @IBOutlet weak var timePopup: NSPopUpButton!
     
@@ -60,6 +61,7 @@ class PreferencesViewController: NSViewController {
         // checkboxes; hide it on hardware where the feature can't apply.
         // The containing stack view (detachesHiddenViews) reflows on its own.
         checkBoxNotchOverflow.isHidden = !NotchOverflowController.hasNotch
+        checkBoxHideArrowWhenCollapsed.isHidden = !MenuBarEngineFactory.canHideArrow
         NotificationCenter.default.addObserver(self, selector: #selector(updateData), name: .prefsChanged, object: nil)
     }
 
@@ -107,6 +109,10 @@ class PreferencesViewController: NSViewController {
 
     @IBAction func hoverToExpandCheckChanged(_ sender: NSButton) {
         Preferences.hoverToExpand = sender.state == .on
+    }
+
+    @IBAction func hideArrowWhenCollapsedCheckChanged(_ sender: NSButton) {
+        Preferences.hideArrowWhenCollapsed = sender.state == .on
     }
     
     
@@ -179,6 +185,9 @@ class PreferencesViewController: NSViewController {
     @objc private func updateData(){
         checkBoxUseFullStatusbar.state = Preferences.useFullStatusBarOnExpandEnabled ? .on : .off
         checkBoxHoverToExpand.state = Preferences.hoverToExpand ? .on : .off
+        // Kept checked but inert while there is no way to expand without the arrow.
+        checkBoxHideArrowWhenCollapsed.state = Preferences.hideArrowWhenCollapsed ? .on : .off
+        checkBoxHideArrowWhenCollapsed.isEnabled = Preferences.canExpandWithoutArrow
         checkBoxLogin.state = Preferences.isAutoStart ? .on : .off
         checkBoxAutoHide.state = Preferences.isAutoHide ? .on : .off
         checkBoxShowPreferences.state = Preferences.isShowPreference ? .on : .off

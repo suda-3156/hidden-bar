@@ -28,6 +28,11 @@ section is enabled.
   Bluetooth, Sound, Battery, Display, Keyboard and Screen Mirroring.
 - Run Hidden Bar from `/Applications`; macOS only recognizes that copy as
   Hidden Bar, and a copy elsewhere hides its own arrow.
+- **Also hide ‹ while collapsed** (Preferences) takes the arrow away with the
+  hidden icons and closes its gap; expanding puts it back in the same place.
+  Expand with the global shortcut or by resting the pointer on the menu bar,
+  and right-click the arrow once it is back. The option only applies while one
+  of those two is set: clearing the last one brings the arrow back at once.
 
 #### While collapsed (macOS limitation, #437)
 
@@ -62,6 +67,7 @@ Expanding the arrow ends all of this immediately.
 | Enable always hidden section | A second zone whose icons stay hidden even when expanded; revealed by option-clicking the arrow |
 | Use full menu bar on expanding | App becomes briefly "regular" while expanded (helps on tight menubars) |
 | Expand when the pointer rests on the menu bar | Resting the pointer in the menu bar for ~0.5s expands a collapsed bar; auto collapse then behaves normally |
+| Also hide ‹ while collapsed | macOS 27 direct build only; see [macOS 27, direct download build](#macos-27-direct-download-build). Greyed out until a global shortcut or hover-to-expand is set |
 
 > **Always-hidden section, current behavior:** items in the always-hidden zone
 > are reliably pushed off-screen only when "hide separators" is also on

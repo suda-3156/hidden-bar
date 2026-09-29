@@ -41,6 +41,10 @@ Standard checks before any release:
 - `hoverToExpand` off: no monitor log line, hover does nothing; on: dwell
   expands (synthesize a `mouseMoved` stream: cursor warping alone fires no
   events);
+- hide-arrow (macOS 27 direct build, from `/Applications`: any other copy
+  has its arrow hidden regardless): off keeps the arrow while collapsed; on
+  hides it and closes the gap, and expanding puts it back in the same slot;
+  clearing the shortcut with hover off while collapsed brings it back at once;
 - autostart pref on -> `AutoStart: SMAppService.mainApp.status = 1` on stderr;
   off -> `= 0` (run the binary directly to capture stderr);
 - localization tables stay parseable: `plutil -lint hidden/*.lproj/*.strings`.

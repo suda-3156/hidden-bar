@@ -206,6 +206,59 @@ final class NativeVisibilityEngineTests: XCTestCase {
         XCTAssertFalse(items.separatorItem.isVisible)
     }
 
+    func testHiddenArrowLeavesThisAppOutOnlyWhileCollapsed() {
+        let engine = makeEngine()
+        engine.updateArrowHidden(whenCollapsed: true)
+        XCTAssertTrue(visibility.requests.isEmpty, "nothing to apply while expanded")
+
+        engine.updateAlwaysHiddenSection(enabled: true, separatorHidden: true)
+        visibility.succeed(visibility.requests.count - 1)
+        XCTAssertEqual(visibility.requests.last?.bundles, ["com.dwarvesv.minimalbar", "com.hidden", "com.visible"])
+
+        engine.collapse { _ in }
+        XCTAssertEqual(visibility.requests.last?.bundles, ["com.visible"])
+        visibility.succeed(visibility.requests.count - 1)
+
+        engine.expand()
+        XCTAssertEqual(visibility.requests.last?.bundles, ["com.dwarvesv.minimalbar", "com.hidden", "com.visible"],
+                       "expanded, the arrow is back to collapse again")
+    }
+
+    func testChangingTheArrowWhileCollapsedAppliesAtOnce() {
+        let engine = makeEngine()
+        engine.collapse { _ in }
+        let first = visibility.succeed(0)
+
+        engine.updateArrowHidden(whenCollapsed: true)
+        XCTAssertEqual(visibility.requests.count, 2)
+        XCTAssertEqual(visibility.requests.last?.bundles, ["com.visible"])
+        XCTAssertFalse(first.isInvalidated, "the arrow stays until the new restriction holds")
+        visibility.succeed(1)
+        XCTAssertTrue(first.isInvalidated)
+
+        engine.updateArrowHidden(whenCollapsed: false)
+        XCTAssertEqual(visibility.requests.last?.bundles, ["com.dwarvesv.minimalbar", "com.visible"],
+                       "losing the way to expand without it brings the arrow back")
+
+        engine.updateArrowHidden(whenCollapsed: false)
+        XCTAssertEqual(visibility.requests.count, 3, "an unchanged value re-applies nothing")
+        XCTAssertEqual(engine.state, .collapsed)
+    }
+
+    func testArrowChangeDuringACollapseIsAppliedWhenItLands() {
+        let engine = makeEngine()
+        engine.updateArrowHidden(whenCollapsed: true)
+        engine.collapse { _ in }
+        XCTAssertEqual(visibility.requests.last?.bundles, ["com.visible"])
+
+        engine.updateArrowHidden(whenCollapsed: false)
+        XCTAssertEqual(visibility.requests.count, 1, "nothing to re-apply before the collapse lands")
+        visibility.succeed(0)
+
+        XCTAssertEqual(visibility.requests.count, 2)
+        XCTAssertEqual(visibility.requests.last?.bundles, ["com.dwarvesv.minimalbar", "com.visible"])
+    }
+
     func testAlwaysHiddenSeparatorFollowsTheSectionSetting() {
         let engine = makeEngine()
         engine.updateAlwaysHiddenSection(enabled: false, separatorHidden: false)

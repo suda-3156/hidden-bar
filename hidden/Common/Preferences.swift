@@ -117,6 +117,29 @@ enum Preferences {
         }
     }
 
+    static var hideArrowWhenCollapsed: Bool {
+        get {
+            UserDefaults.standard.bool(forKey: UserDefaults.Key.hideArrowWhenCollapsed)
+        }
+
+        set {
+            UserDefaults.standard.set(newValue, forKey: UserDefaults.Key.hideArrowWhenCollapsed)
+            NotificationCenter.default.post(Notification(name: .prefsChanged))
+        }
+    }
+
+    // A collapsed bar without the arrow can only be expanded by the global
+    // shortcut or by hovering the menu bar.
+    static var canExpandWithoutArrow: Bool {
+        globalKey != nil || hoverToExpand
+    }
+
+    // The arrow stays while there is no other way to expand, whatever
+    // hideArrowWhenCollapsed says, so hiding it never leads to a dead end.
+    static var isArrowHiddenWhenCollapsed: Bool {
+        hideArrowWhenCollapsed && canExpandWithoutArrow
+    }
+
     static var useFullStatusBarOnExpandEnabled: Bool {
         get {
             UserDefaults.standard.bool(forKey: UserDefaults.Key.useFullStatusBarOnExpandEnabled)

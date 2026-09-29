@@ -75,9 +75,11 @@ class StatusBarController: MenuBarItemProvider {
         restoreRemovedStatusItems()
         setupAlwayHideStatusBar()
         applyHoverToExpand()
+        applyArrowVisibility()
         NotificationCenter.default.addObserver(self, selector: #selector(handleScreenParametersChanged), name: NSApplication.didChangeScreenParametersNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateAutoHide), name: .prefsChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(applyHoverToExpand), name: .prefsChanged, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(applyArrowVisibility), name: .prefsChanged, object: nil)
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             self?.collapseMenuBar()
         }
@@ -129,6 +131,12 @@ class StatusBarController: MenuBarItemProvider {
         }
     }
     
+    // Also runs when the shortcut or hover-to-expand changes: losing the last
+    // one while collapsed must bring the arrow back at once.
+    @objc private func applyArrowVisibility() {
+        menuBarEngine.updateArrowHidden(whenCollapsed: Preferences.isArrowHiddenWhenCollapsed)
+    }
+
     @objc private func handleScreenParametersChanged() {
         // Re-apply the recomputed length to the LIVE item when collapsed, or a
         // display hot-plug leaves the separator at a stale length (PR #354).

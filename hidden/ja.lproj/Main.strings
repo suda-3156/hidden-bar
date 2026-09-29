@@ -209,6 +209,9 @@
 /* Class = "NSButtonCell"; title = "Expand when the pointer rests on the menu bar"; ObjectID = "Hvr-Ex-Cl1"; */
 "Hvr-Ex-Cl1.title" = "メニューバーにポインタを置いたらアイコンを表示";
 
+/* Class = "NSButtonCell"; title = "Also hide ‹ while collapsed (needs a shortcut or hover)"; ObjectID = "Arw-Hd-Cl1"; */
+"Arw-Hd-Cl1.title" = "折りたたみ中は ‹ も隠す（ショートカットかホバーが必要）";
+
 /* Class = "NSMenuItem"; title = "\tDefault"; ObjectID = "Nop-cj-93Q"; */
 "Nop-cj-93Q.title" = "\tDefault";
 

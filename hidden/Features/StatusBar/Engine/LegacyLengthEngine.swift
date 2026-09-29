@@ -68,6 +68,11 @@ final class LegacyLengthEngine: MenuBarEngine {
         items?.alwaysHiddenItem?.length = length
     }
 
+    // Not supported: the arrow is the boundary the separator is checked against,
+    // and taking it out of the bar either leaves a gap (zero length) or loses its
+    // autosaved slot (isVisible = false).
+    func updateArrowHidden(whenCollapsed hidden: Bool) {}
+
     // The separator is what widens, so it must sit between the hidden icons and
     // the arrow, and the always-hidden separator further out still.
     var isArrangementValid: Bool {

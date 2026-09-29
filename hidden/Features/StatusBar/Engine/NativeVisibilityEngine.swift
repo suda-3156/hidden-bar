@@ -22,6 +22,12 @@ import AppKit
 // has already removed everything it would separate. It keeps its slot because
 // its position is what defines that section.
 //
+// The arrow itself can go with the hidden section while collapsed: leaving this
+// app out of the allow-list makes macOS hide it too and close the gap. Its slot
+// is untouched, so it comes back in place on expand. Hiding is per app, so the
+// always-hidden separator goes with it, which changes nothing since it is at
+// zero width while collapsed anyway.
+//
 // Limits, all from what macOS 27 exposes:
 // - Hiding is per app: an app with several icons hides or shows them together
 //   (the most visible section wins).
@@ -76,6 +82,7 @@ final class NativeVisibilityEngine: MenuBarEngine {
 
     private var alwaysHiddenEnabled = false
     private var alwaysHiddenSeparatorHidden = false
+    private var arrowHiddenWhenCollapsed = false
 
     init(items: MenuBarItemProvider,
          inventory: MenuBarInventoryProviding = AccessibilityMenuBarInventory(),
@@ -131,11 +138,16 @@ final class NativeVisibilityEngine: MenuBarEngine {
                 self.state = .expanded
                 return completion(.unavailable)
             }
-            self.activate(allowing: layout.bundles(in: [.visible])) { [weak self] succeeded in
+            let arrowHidden = self.arrowHiddenWhenCollapsed
+            self.activate(allowing: layout.bundles(in: [.visible]), keepingArrow: !arrowHidden) { [weak self] succeeded in
                 guard let self = self else { return }
                 self.state = succeeded ? .collapsed : .expanded
                 if succeeded {
                     self.setSeparatorsVisible(false)
+                    // Changed while this was in flight.
+                    if arrowHidden != self.arrowHiddenWhenCollapsed {
+                        self.restorePresentation()
+                    }
                 }
                 completion(succeeded ? .collapsed : .unavailable)
             }
@@ -156,6 +168,16 @@ final class NativeVisibilityEngine: MenuBarEngine {
         }
         if state == .expanded {
             applyExpandedPresentation()
+        }
+    }
+
+    // Applied straight away while collapsed, so losing the last way to expand
+    // without the arrow (the controller then passes false) brings it back.
+    func updateArrowHidden(whenCollapsed hidden: Bool) {
+        guard hidden != arrowHiddenWhenCollapsed else { return }
+        arrowHiddenWhenCollapsed = hidden
+        if state == .collapsed {
+            restorePresentation()
         }
     }
 
@@ -214,14 +236,15 @@ final class NativeVisibilityEngine: MenuBarEngine {
     // While a microphone or camera is in use nothing is activated, but the
     // request still succeeds: the bar keeps the state the user asked for and the
     // restriction follows once capture stops.
-    private func activate(allowing bundles: [String], completion: @escaping (Bool) -> Void) {
+    private func activate(allowing bundles: [String], keepingArrow: Bool = true, completion: @escaping (Bool) -> Void) {
         generation += 1
         let generation = self.generation
         guard !captureActivity.isActive else {
             dropAssertionForCapture()
             return completion(true)
         }
-        let allowed = (ownBundleIdentifier.map { [$0] } ?? []) + bundles
+        let own = keepingArrow ? ownBundleIdentifier.map { [$0] } ?? [] : []
+        let allowed = own + bundles
         visibility.activate(allowedSystemItems: Self.systemItemsToKeep,
                             allowedBundleIdentifiers: allowed) { [weak self] result in
             guard let self = self, generation == self.generation else {
@@ -291,14 +314,15 @@ final class NativeVisibilityEngine: MenuBarEngine {
         }
     }
 
-    // Re-applies the current state from a fresh read of the bar, which nothing
-    // restricts at this point. A failure leaves the bar whole (fail open).
+    // Re-applies the current state, from a fresh read of the bar when nothing
+    // restricts it (capture just stopped), else from the cached sections. A
+    // failure leaves the bar whole (fail open).
     private func restorePresentation() {
         switch state {
         case .collapsed:
             withLayout { [weak self] layout in
                 guard let self = self, let layout = layout else { return }
-                self.activate(allowing: layout.bundles(in: [.visible])) { _ in }
+                self.activate(allowing: layout.bundles(in: [.visible]), keepingArrow: !self.arrowHiddenWhenCollapsed) { _ in }
             }
         case .expanded:
             applyExpandedPresentation()
