@@ -1,3 +1,50 @@
+## About this fork
+
+This is a personal fork of [Hidden Bar](https://github.com/dwarvesf/hidden). It
+is not intended to be merged back upstream. It branches from upstream `develop`
+as of 2026-09-19 (after Notch Overflow landed). The rest of this README is
+upstream's: the install links and releases it points to are upstream builds,
+which do not include the changes below. To use this fork, build it locally
+with `task install` (see [CLAUDE.md](CLAUDE.md) for signing).
+
+### Changes from upstream
+
+Behavior (macOS 27 items apply to the direct, non-App Store build only):
+
+- **Hide the arrow while collapsed** (macOS 27): an optional Preferences
+  checkbox takes the arrow away with the hidden icons and closes its gap. It
+  only applies while a global shortcut or hover-to-expand can expand the bar.
+- **Double-press the shortcut to show icons past the notch** (macOS 27,
+  off by default): a double press expands and also opens the `«` overflow
+  button macOS shows when icons do not fit beside the notch. macOS gives no
+  way to open it except a click, so Hidden Bar synthesizes one: a menu open
+  at that moment closes, and the pointer occasionally does not return.
+- **Hover-to-expand checkbox**: upstream only offered it as a Terminal default.
+  It now has a Preferences checkbox and takes effect without a relaunch.
+- **Clearing the shortcut removes it** from the preferences instead of storing
+  a `null` value.
+
+Development:
+
+- `Taskfile.yml` builds, tests, runs and installs the direct build, with the
+  signing identity taken from a git-ignored `.env.local` instead of upstream's
+  development team.
+- `CLAUDE.md` is tracked and describes the fork's build and conventions.
+
+### Cherry-picked from upstream pull requests
+
+These commits keep their original authors:
+
+- **Time Machine and other SystemUIServer menu extras can stay visible** on
+  macOS 27 instead of always being hidden, with tests for how they are
+  sectioned (by renovys).
+- **The whole bar shows while a microphone or camera is in use** on macOS 27,
+  so the menu-bar indicator naming the recording app is not hidden (by Kevin
+  Hallmark).
+- **Documentation of what macOS 27 restricts while collapsed**: Now Playing,
+  Live Activities, and the clock not opening Notification Center (by Kevin
+  Hallmark).
+
 <p align="center">
 	<img width="200" height="200" margin-right="100%" src="https://github.com/dwarvesf/hidden/blob/develop/img/icon_512%402x.png?raw=true">
 </p>
