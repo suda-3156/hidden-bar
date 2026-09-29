@@ -33,6 +33,8 @@ class PreferencesViewController: NSViewController {
     
     @IBOutlet weak var checkBoxHoverToExpand: NSButton!
     @IBOutlet weak var checkBoxHideArrowWhenCollapsed: NSButton!
+    @IBOutlet weak var checkBoxDoublePressRevealsOverflow: NSButton!
+    @IBOutlet weak var doublePressRevealsOverflowRow: NSStackView!
     @IBOutlet weak var checkBoxUseFullStatusbar: NSButton!
     @IBOutlet weak var timePopup: NSPopUpButton!
     
@@ -62,6 +64,7 @@ class PreferencesViewController: NSViewController {
         // The containing stack view (detachesHiddenViews) reflows on its own.
         checkBoxNotchOverflow.isHidden = !NotchOverflowController.hasNotch
         checkBoxHideArrowWhenCollapsed.isHidden = !MenuBarEngineFactory.canHideArrow
+        doublePressRevealsOverflowRow.isHidden = !MenuBarEngineFactory.canRevealSystemOverflow
         NotificationCenter.default.addObserver(self, selector: #selector(updateData), name: .prefsChanged, object: nil)
     }
 
@@ -113,6 +116,10 @@ class PreferencesViewController: NSViewController {
 
     @IBAction func hideArrowWhenCollapsedCheckChanged(_ sender: NSButton) {
         Preferences.hideArrowWhenCollapsed = sender.state == .on
+    }
+
+    @IBAction func doublePressRevealsOverflowCheckChanged(_ sender: NSButton) {
+        Preferences.doublePressRevealsSystemOverflow = sender.state == .on
     }
     
     
@@ -188,6 +195,9 @@ class PreferencesViewController: NSViewController {
         // Kept checked but inert while there is no way to expand without the arrow.
         checkBoxHideArrowWhenCollapsed.state = Preferences.hideArrowWhenCollapsed ? .on : .off
         checkBoxHideArrowWhenCollapsed.isEnabled = Preferences.canExpandWithoutArrow
+        // Kept checked but inert while there is no shortcut to press.
+        checkBoxDoublePressRevealsOverflow.state = Preferences.doublePressRevealsSystemOverflow ? .on : .off
+        checkBoxDoublePressRevealsOverflow.isEnabled = Preferences.globalKey != nil
         checkBoxLogin.state = Preferences.isAutoStart ? .on : .off
         checkBoxAutoHide.state = Preferences.isAutoHide ? .on : .off
         checkBoxShowPreferences.state = Preferences.isShowPreference ? .on : .off

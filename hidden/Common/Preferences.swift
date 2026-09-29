@@ -140,6 +140,19 @@ enum Preferences {
         hideArrowWhenCollapsed && canExpandWithoutArrow
     }
 
+    // Off by default: the overflow can only be opened with a synthesized click,
+    // which closes any open menu and may leave the pointer where it clicked.
+    static var doublePressRevealsSystemOverflow: Bool {
+        get {
+            UserDefaults.standard.bool(forKey: UserDefaults.Key.doublePressRevealsSystemOverflow)
+        }
+
+        set {
+            UserDefaults.standard.set(newValue, forKey: UserDefaults.Key.doublePressRevealsSystemOverflow)
+            NotificationCenter.default.post(Notification(name: .prefsChanged))
+        }
+    }
+
     static var useFullStatusBarOnExpandEnabled: Bool {
         get {
             UserDefaults.standard.bool(forKey: UserDefaults.Key.useFullStatusBarOnExpandEnabled)

@@ -21,9 +21,11 @@ protocol SystemOverflowRevealing: AnyObject {
 // and flips between "Show Hidden Menu Bar Items" and "Hide Menu Bar Items", so
 // only the role identifies it. It exposes no Accessibility action (AXPress
 // returns kAXErrorActionUnsupported, measured on 27.0, 26A428), so it is pressed
-// with a synthesized click and the pointer is put back afterwards. MenuBarAgent
-// rebuilds it closed whenever the hidden section is shown again, so a press
-// right after expanding always opens it.
+// with a synthesized click and the pointer is put back afterwards. Both costs
+// are accepted and shown next to the preference: the click closes any open menu,
+// and the warp back occasionally does not take. MenuBarAgent rebuilds the
+// button closed whenever the hidden section is shown again, so a press right
+// after expanding always opens it.
 final class SystemOverflowButton: SystemOverflowRevealing {
     private static let bundleIdentifier = "com.apple.MenuBarAgent"
     private static let messagingTimeout: Float = 0.1

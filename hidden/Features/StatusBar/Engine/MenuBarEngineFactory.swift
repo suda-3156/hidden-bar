@@ -21,6 +21,12 @@ enum MenuBarEngineFactory {
         return usesNativeVisibility
     }
 
+    // Only macOS 27 folds what does not fit beside the notch behind its own
+    // overflow button, and only native hiding can reach it.
+    static var canRevealSystemOverflow: Bool {
+        return usesNativeVisibility
+    }
+
     // macOS 27 ejects an inflated separator from the menu bar (#360). The
     // direct build hides natively there instead. The App Store build cannot:
     // the sandbox blocks the Accessibility reads that locate the sections.

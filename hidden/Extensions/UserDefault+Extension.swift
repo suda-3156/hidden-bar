@@ -20,6 +20,7 @@ extension UserDefaults {
         static let useFullStatusBarOnExpandEnabled = "useFullStatusBarOnExpandEnabled"
         static let hoverToExpand = "hoverToExpand"
         static let hideArrowWhenCollapsed = "hideArrowWhenCollapsed"
+        static let doublePressRevealsSystemOverflow = "doublePressRevealsSystemOverflow"
         static let notchOverflowEnabled = "notchOverflowEnabled"
     }
 }

@@ -269,10 +269,11 @@ class StatusBarController: MenuBarItemProvider {
     // double click would.
     private var shortcutPresses = ShortcutDoublePressDetector(interval: NSEvent.doubleClickInterval)
 
-    // A single press toggles as before. A double press ends expanded, with the
-    // icons that did not fit beside the notch shown as well.
+    // A single press toggles as before. A double press, when enabled, ends
+    // expanded with the icons that did not fit beside the notch shown as well.
     func handleShortcutPress() {
-        guard shortcutPresses.isDoublePress(at: Date()) else {
+        guard Preferences.doublePressRevealsSystemOverflow,
+              shortcutPresses.isDoublePress(at: Date()) else {
             return expandCollapseIfNeeded()
         }
         if isCollapsed {

@@ -46,7 +46,8 @@ Standard checks before any release:
   hides it and closes the gap, and expanding puts it back in the same slot;
   clearing the shortcut with hover off while collapsed brings it back at once;
 - shortcut double press (macOS 27 direct build, with more hidden icons than fit
-  beside the notch): from collapsed and from expanded it ends expanded with
+  beside the notch): with the preference off, it behaves as two single
+  presses; on, from collapsed and from expanded it ends expanded with
   MenuBarAgent's overflow button reading "Hide Menu Bar Items" and the pointer
   back where it was; a single press still toggles. Synthesized presses need a
   key-down of the shortcut's modifier around them, or the first is lost;

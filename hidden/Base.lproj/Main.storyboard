@@ -857,12 +857,48 @@ between sections to configure Hidden Bar.</string>
                                                 </view>
                                                 <font key="titleFont" size="11" name="HelveticaNeue"/>
                                             </box>
+                                            <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="2" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dbl-Pr-Stk" userLabel="Stack Double Press">
+                                                <rect key="frame" x="7" y="-70" width="260" height="58"/>
+                                                <subviews>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Dbl-Pr-Bx1" userLabel="Check Box Double Press Reveals Overflow">
+                                                        <rect key="frame" x="-2" y="41" width="262" height="18"/>
+                                                        <buttonCell key="cell" type="check" title="Double-press to show icons past the notch" bezelStyle="regularSquare" imagePosition="left" inset="2" id="Dbl-Pr-Cl1">
+                                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                        <connections>
+                                                            <action selector="doublePressRevealsOverflowCheckChanged:" target="XfG-lQ-9wD" id="Dbl-Pr-Ac1"/>
+                                                        </connections>
+                                                    </button>
+                                                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Dbl-Pr-Nte" userLabel="Label Double Press Note">
+                                                        <rect key="frame" x="-2" y="0.0" width="264" height="39"/>
+                                                        <constraints>
+                                                            <constraint firstAttribute="width" constant="260" id="Dbl-Pr-Wdt"/>
+                                                        </constraints>
+                                                        <textFieldCell key="cell" title="Hidden Bar clicks macOS's &#171; button for you. Any open menu closes, and the pointer may now and then not return to where it was." id="Dbl-Pr-NCl">
+                                                            <font key="font" metaFont="smallSystem"/>
+                                                            <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                        </textFieldCell>
+                                                    </textField>
+                                                </subviews>
+                                                <visibilityPriorities>
+                                                    <integer value="1000"/>
+                                                    <integer value="1000"/>
+                                                </visibilityPriorities>
+                                                <customSpacing>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                </customSpacing>
+                                            </stackView>
                                         </subviews>
                                         <visibilityPriorities>
                                             <integer value="1000"/>
                                             <integer value="1000"/>
+                                            <integer value="1000"/>
                                         </visibilityPriorities>
                                         <customSpacing>
+                                            <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
                                         </customSpacing>
@@ -897,6 +933,8 @@ between sections to configure Hidden Bar.</string>
                         <outlet property="btnClear" destination="D4j-NZ-37N" id="2yc-ze-q1e"/>
                         <outlet property="btnShortcut" destination="yKf-P1-I45" id="AFr-y7-VbP"/>
                         <outlet property="checkBoxAutoHide" destination="gj1-Ms-4No" id="Ibl-5H-2vh"/>
+                        <outlet property="checkBoxDoublePressRevealsOverflow" destination="Dbl-Pr-Bx1" id="Dbl-Pr-Ot1"/>
+                        <outlet property="doublePressRevealsOverflowRow" destination="Dbl-Pr-Stk" id="Dbl-Pr-Ot2"/>
                         <outlet property="checkBoxHideArrowWhenCollapsed" destination="Arw-Hd-Bx1" id="Arw-Hd-Ot1"/>
                         <outlet property="checkBoxHoverToExpand" destination="Hvr-Ex-Bx1" id="Hvr-Ex-Ot1"/>
                         <outlet property="checkBoxLogin" destination="cbR-Jv-adm" id="DFO-De-0KU"/>

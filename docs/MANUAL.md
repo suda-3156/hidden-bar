@@ -33,11 +33,13 @@ section is enabled.
   Expand with the global shortcut or by resting the pointer on the menu bar,
   and right-click the arrow once it is back. The option only applies while one
   of those two is set: clearing the last one brings the arrow back at once.
-- **Press the global shortcut twice quickly** to expand and also open the
-  `<<` button macOS shows when icons do not fit beside the notch. Hidden Bar
-  clicks that button for you with a synthesized click (macOS offers no other
-  way to open it), which can close a menu that is open at that moment.
-  Nothing more happens when everything fits.
+- **Double-press to show icons past the notch** (Preferences, off by default):
+  pressing the global shortcut twice quickly expands and also opens the `«`
+  button macOS shows when icons do not fit beside the notch. macOS offers no
+  way to open it other than clicking it, so Hidden Bar synthesizes a click
+  there and moves the pointer back. Any menu open at that moment closes, and
+  now and then the pointer stays where the click landed. Nothing more happens
+  when everything fits.
 
 #### While collapsed (macOS limitation, #437)
 
@@ -73,6 +75,7 @@ Expanding the arrow ends all of this immediately.
 | Use full menu bar on expanding | App becomes briefly "regular" while expanded (helps on tight menubars) |
 | Expand when the pointer rests on the menu bar | Resting the pointer in the menu bar for ~0.5s expands a collapsed bar; auto collapse then behaves normally |
 | Also hide ‹ while collapsed | macOS 27 direct build only; see [macOS 27, direct download build](#macos-27-direct-download-build). Greyed out until a global shortcut or hover-to-expand is set |
+| Double-press to show icons past the notch | macOS 27 direct build only; see [macOS 27, direct download build](#macos-27-direct-download-build). Greyed out until a global shortcut is set |
 
 > **Always-hidden section, current behavior:** items in the always-hidden zone
 > are reliably pushed off-screen only when "hide separators" is also on
