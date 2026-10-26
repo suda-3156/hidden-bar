@@ -1,8 +1,9 @@
 import XCTest
 @testable import Hidden_Bar
 
-/// A double press of the shortcut opens macOS's overflow only when the user
-/// opted in, because doing so takes a synthesized click.
+/// A double press of the shortcut, or a double click on the arrow, opens
+/// macOS's overflow only when the user opted in, because doing so takes a
+/// synthesized click.
 final class DoublePressOverflowPreferencesTests: XCTestCase {
 
     private let key = UserDefaults.Key.doublePressRevealsSystemOverflow

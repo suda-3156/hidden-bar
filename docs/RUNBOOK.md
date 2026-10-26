@@ -51,6 +51,9 @@ Standard checks before any release:
   MenuBarAgent's overflow button reading "Hide Menu Bar Items" and the pointer
   back where it was; a single press still toggles. Synthesized presses need a
   key-down of the shortcut's modifier around them, or the first is lost;
+- arrow double click (same setup): with the preference off, it behaves as two
+  single clicks; on, it ends expanded with the overflow open as for the
+  shortcut, also with no shortcut set;
 - autostart pref on -> `AutoStart: SMAppService.mainApp.status = 1` on stderr;
   off -> `= 0` (run the binary directly to capture stderr);
 - localization tables stay parseable: `plutil -lint hidden/*.lproj/*.strings`.

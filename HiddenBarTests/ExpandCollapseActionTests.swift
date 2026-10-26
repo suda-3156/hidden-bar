@@ -39,22 +39,22 @@ final class ExpandCollapseActionTests: XCTestCase {
     }
 }
 
-final class ShortcutDoublePressDetectorTests: XCTestCase {
+final class DoublePressDetectorTests: XCTestCase {
     private let start = Date(timeIntervalSinceReferenceDate: 0)
 
     func testFirstPressIsSingle() {
-        var detector = ShortcutDoublePressDetector(interval: 0.4)
+        var detector = DoublePressDetector(interval: 0.4)
         XCTAssertFalse(detector.isDoublePress(at: start))
     }
 
     func testSecondPressWithinIntervalIsDouble() {
-        var detector = ShortcutDoublePressDetector(interval: 0.4)
+        var detector = DoublePressDetector(interval: 0.4)
         _ = detector.isDoublePress(at: start)
         XCTAssertTrue(detector.isDoublePress(at: start.addingTimeInterval(0.3)))
     }
 
     func testSecondPressAfterIntervalStartsOver() {
-        var detector = ShortcutDoublePressDetector(interval: 0.4)
+        var detector = DoublePressDetector(interval: 0.4)
         _ = detector.isDoublePress(at: start)
         XCTAssertFalse(detector.isDoublePress(at: start.addingTimeInterval(0.5)))
         XCTAssertTrue(detector.isDoublePress(at: start.addingTimeInterval(0.8)))
@@ -63,7 +63,7 @@ final class ShortcutDoublePressDetectorTests: XCTestCase {
     // A triple press is a double press followed by a new single one, not two
     // overlapping doubles.
     func testThirdPressIsSingleAgain() {
-        var detector = ShortcutDoublePressDetector(interval: 0.4)
+        var detector = DoublePressDetector(interval: 0.4)
         _ = detector.isDoublePress(at: start)
         XCTAssertTrue(detector.isDoublePress(at: start.addingTimeInterval(0.2)))
         XCTAssertFalse(detector.isDoublePress(at: start.addingTimeInterval(0.3)))

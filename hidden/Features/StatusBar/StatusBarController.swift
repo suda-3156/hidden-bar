@@ -184,7 +184,13 @@ class StatusBarController: MenuBarItemProvider {
         // so VoiceOver can operate the bar.
         switch ExpandCollapseActionResolver.action(eventType: event?.type, optionPressed: event?.modifierFlags.contains(.option) ?? false) {
         case .toggle:
-            self.expandCollapseIfNeeded()
+            // The first click of a double click already toggled; the second
+            // does what a double press of the shortcut does.
+            if Preferences.doublePressRevealsSystemOverflow, arrowClicks.isDoublePress(at: Date()) {
+                expandAndRevealSystemOverflow()
+            } else {
+                self.expandCollapseIfNeeded()
+            }
         case .contextMenu:
             // Right-click opens the same context menu the separator has (#356),
             // making settings reachable from the control everyone clicks.
@@ -267,7 +273,10 @@ class StatusBarController: MenuBarItemProvider {
     
     // The system's double-click interval, so a double press feels like a
     // double click would.
-    private var shortcutPresses = ShortcutDoublePressDetector(interval: NSEvent.doubleClickInterval)
+    private var shortcutPresses = DoublePressDetector(interval: NSEvent.doubleClickInterval)
+    // Timed here rather than read from NSEvent.clickCount: on 27.0 the second
+    // click of a double click reaches the arrow with a clickCount of 1.
+    private var arrowClicks = DoublePressDetector(interval: NSEvent.doubleClickInterval)
 
     // A single press toggles as before. A double press, when enabled, ends
     // expanded with the icons that did not fit beside the notch shown as well.
@@ -276,6 +285,12 @@ class StatusBarController: MenuBarItemProvider {
               shortcutPresses.isDoublePress(at: Date()) else {
             return expandCollapseIfNeeded()
         }
+        expandAndRevealSystemOverflow()
+    }
+
+    // Ends expanded with the icons that did not fit beside the notch shown as
+    // well, whichever way the first press or click of the pair went.
+    private func expandAndRevealSystemOverflow() {
         if isCollapsed {
             expandMenubar()
         } else if menuBarEngine.state == .calibrating {

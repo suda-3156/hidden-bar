@@ -14,9 +14,9 @@ Behavior (macOS 27 items apply to the direct, non-App Store build only):
 - **Hide the arrow while collapsed** (macOS 27): an optional Preferences
   checkbox takes the arrow away with the hidden icons and closes its gap. It
   only applies while a global shortcut or hover-to-expand can expand the bar.
-- **Double-press the shortcut to show icons past the notch** (macOS 27,
-  off by default): a double press expands and also opens the `«` overflow
-  button macOS shows when icons do not fit beside the notch. macOS gives no
+- **Double-press the shortcut or double-click the arrow to show icons past
+  the notch** (macOS 27, off by default): either one expands and also opens
+  the `«` overflow button macOS shows when icons do not fit beside the notch. macOS gives no
   way to open it except a click, so Hidden Bar synthesizes one: a menu open
   at that moment closes, and the pointer occasionally does not return.
 - **Hover-to-expand checkbox**: upstream only offered it as a Terminal default.
