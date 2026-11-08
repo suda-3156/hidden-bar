@@ -30,32 +30,39 @@ protocol CaptureActivityMonitoring: AnyObject {
 final class CaptureActivityMonitor: CaptureActivityMonitoring {
     var onChange: (() -> Void)?
 
+    // The objects whose capture state is listened to.
     private var processes: [AudioObjectID] = []
     private var cameras: [CMIOObjectID] = []
-    private var audioListener: AudioObjectPropertyListenerBlock!
-    private var cameraListener: CMIOObjectPropertyListenerBlock!
+    private var processListListener: AudioObjectPropertyListenerBlock!
+    private var cameraListListener: CMIOObjectPropertyListenerBlock!
+    private var processStateListener: AudioObjectPropertyListenerBlock!
+    private var cameraStateListener: CMIOObjectPropertyListenerBlock!
 
     init() {
-        // One block for every registration, so each can be removed again.
-        audioListener = { [weak self] _, _ in self?.devicesDidChange() }
-        cameraListener = { [weak self] _, _ in self?.devicesDidChange() }
+        // One block per kind of registration, so each can be removed again.
+        processListListener = { [weak self] _, _ in self?.processesDidChange() }
+        cameraListListener = { [weak self] _, _ in self?.camerasDidChange() }
+        processStateListener = { [weak self] _, _ in self?.onChange?() }
+        cameraStateListener = { [weak self] _, _ in self?.onChange?() }
         if #available(macOS 14.2, *) {
             var processList = Self.audioAddress(kAudioHardwarePropertyProcessObjectList)
-            AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &processList, .main, audioListener)
+            AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &processList, .main, processListListener)
+            syncProcesses(to: Self.audioObjects(kAudioHardwarePropertyProcessObjectList))
         }
         var cameraList = Self.cameraAddress(CMIOObjectPropertySelector(kCMIOHardwarePropertyDevices))
-        CMIOObjectAddPropertyListenerBlock(CMIOObjectID(kCMIOObjectSystemObject), &cameraList, .main, cameraListener)
-        track()
+        CMIOObjectAddPropertyListenerBlock(CMIOObjectID(kCMIOObjectSystemObject), &cameraList, .main, cameraListListener)
+        syncCameras(to: Self.cameraObjects())
     }
 
     deinit {
-        untrack()
         if #available(macOS 14.2, *) {
+            syncProcesses(to: [])
             var processList = Self.audioAddress(kAudioHardwarePropertyProcessObjectList)
-            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &processList, .main, audioListener)
+            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &processList, .main, processListListener)
         }
+        syncCameras(to: [])
         var cameraList = Self.cameraAddress(CMIOObjectPropertySelector(kCMIOHardwarePropertyDevices))
-        CMIOObjectRemovePropertyListenerBlock(CMIOObjectID(kCMIOObjectSystemObject), &cameraList, .main, cameraListener)
+        CMIOObjectRemovePropertyListenerBlock(CMIOObjectID(kCMIOObjectSystemObject), &cameraList, .main, cameraListListener)
     }
 
     var isActive: Bool {
@@ -67,43 +74,47 @@ final class CaptureActivityMonitor: CaptureActivityMonitoring {
         return cameras.contains { Self.cameraIsRunning($0) }
     }
 
-    // Processes and cameras come and go, so any change re-registers on the
-    // current set before reporting.
-    private func devicesDidChange() {
-        untrack()
-        track()
+    // Processes and cameras come and go, so a list change registers on the ones
+    // that appeared; a state change only reports. Registrations already in
+    // place are never redone: on 27.2 CMIOObjectRemovePropertyListenerBlock
+    // returns noErr but leaves the listener in place, so re-registering on
+    // every change added a listener per camera each time, every one of which
+    // re-registered again on the next change. A few camera sessions then kept
+    // the main queue busy for seconds and delayed clicks on the arrow.
+    private func processesDidChange() {
+        if #available(macOS 14.2, *) {
+            syncProcesses(to: Self.audioObjects(kAudioHardwarePropertyProcessObjectList))
+        }
         onChange?()
     }
 
-    private func track() {
-        if #available(macOS 14.2, *) {
-            processes = Self.audioObjects(kAudioHardwarePropertyProcessObjectList)
-            var running = Self.audioAddress(kAudioProcessPropertyIsRunningInput)
-            for process in processes {
-                AudioObjectAddPropertyListenerBlock(process, &running, .main, audioListener)
-            }
-        }
-        cameras = Self.cameraObjects()
-        var running = Self.cameraAddress(CMIOObjectPropertySelector(kCMIODevicePropertyDeviceIsRunningSomewhere))
-        for camera in cameras {
-            CMIOObjectAddPropertyListenerBlock(camera, &running, .main, cameraListener)
-        }
+    private func camerasDidChange() {
+        syncCameras(to: Self.cameraObjects())
+        onChange?()
     }
 
     // Removing from an object that has already gone away fails harmlessly.
-    private func untrack() {
-        if #available(macOS 14.2, *) {
-            var running = Self.audioAddress(kAudioProcessPropertyIsRunningInput)
-            for process in processes {
-                AudioObjectRemovePropertyListenerBlock(process, &running, .main, audioListener)
-            }
+    @available(macOS 14.2, *)
+    private func syncProcesses(to current: [AudioObjectID]) {
+        var running = Self.audioAddress(kAudioProcessPropertyIsRunningInput)
+        for process in processes where !current.contains(process) {
+            AudioObjectRemovePropertyListenerBlock(process, &running, .main, processStateListener)
         }
+        for process in current where !processes.contains(process) {
+            AudioObjectAddPropertyListenerBlock(process, &running, .main, processStateListener)
+        }
+        processes = current
+    }
+
+    private func syncCameras(to current: [CMIOObjectID]) {
         var running = Self.cameraAddress(CMIOObjectPropertySelector(kCMIODevicePropertyDeviceIsRunningSomewhere))
-        for camera in cameras {
-            CMIOObjectRemovePropertyListenerBlock(camera, &running, .main, cameraListener)
+        for camera in cameras where !current.contains(camera) {
+            CMIOObjectRemovePropertyListenerBlock(camera, &running, .main, cameraStateListener)
         }
-        processes = []
-        cameras = []
+        for camera in current where !cameras.contains(camera) {
+            CMIOObjectAddPropertyListenerBlock(camera, &running, .main, cameraStateListener)
+        }
+        cameras = current
     }
 
     // MARK: - CoreAudio
