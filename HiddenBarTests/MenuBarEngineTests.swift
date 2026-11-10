@@ -394,64 +394,72 @@ final class NativeVisibilityEngineTests: XCTestCase {
 
     // MARK: Microphone and camera (#437)
 
-    func testCollapseWhileCapturingHoldsNoRestriction() {
+    func testCollapseWhileCapturingIsRefused() {
         capture.isActive = true
         let engine = makeEngine()
+        XCTAssertTrue(engine.isHeldOpen, "already held when capture was on at launch")
         var results: [CollapseResult] = []
         engine.collapse { results.append($0) }
 
-        XCTAssertEqual(results, [.collapsed], "the bar keeps the state the user asked for")
-        XCTAssertEqual(engine.state, .collapsed)
+        XCTAssertEqual(results, [.unavailable])
+        XCTAssertEqual(engine.state, .expanded)
         XCTAssertTrue(visibility.requests.isEmpty, "assessment mode would hide the recording indicators")
     }
 
-    func testCaptureStartingWhileCollapsedDropsTheRestriction() {
+    func testCaptureStartingWhileCollapsedExpandsAndReportsTheHold() {
         let engine = makeEngine()
+        var holdChanges = 0
+        engine.onHoldChange = { holdChanges += 1 }
         engine.collapse { _ in }
         let collapsed = visibility.succeed(0)
 
         capture.set(true)
         XCTAssertTrue(collapsed.isInvalidated)
-        XCTAssertEqual(engine.state, .collapsed)
+        XCTAssertEqual(engine.state, .expanded)
+        XCTAssertTrue(engine.isHeldOpen)
+        XCTAssertEqual(holdChanges, 1)
         XCTAssertEqual(visibility.requests.count, 1)
     }
 
-    func testCaptureStoppingHidesAgainFromAFreshRead() {
+    func testCaptureStoppingEndsTheHoldAndLeavesCollapsingToTheCaller() {
         let engine = makeEngine()
+        var holdChanges = 0
+        engine.onHoldChange = { holdChanges += 1 }
         engine.collapse { _ in }
         visibility.succeed(0)
         capture.set(true)
-        let snapshotsBefore = inventory.snapshots
 
-        // The bar is unrestricted while capturing, so the sections are re-read.
-        inventory.items = [item("com.hidden", x: 1100), item("com.moved", x: 1400)]
         capture.set(false)
-        XCTAssertEqual(inventory.snapshots, snapshotsBefore + 1)
-        XCTAssertEqual(visibility.requests.count, 2)
-        XCTAssertEqual(visibility.requests.last?.bundles, ["com.dwarvesv.minimalbar", "com.moved"])
-        let restored = visibility.succeed(1)
-        XCTAssertFalse(restored.isInvalidated)
+        XCTAssertFalse(engine.isHeldOpen)
+        XCTAssertEqual(holdChanges, 2)
+        XCTAssertEqual(engine.state, .expanded)
+        XCTAssertEqual(visibility.requests.count, 1, "whether to collapse again is not the engine's decision")
+
+        var results: [CollapseResult] = []
+        engine.collapse { results.append($0) }
+        visibility.succeed(1)
+        XCTAssertEqual(results, [.collapsed])
         XCTAssertEqual(engine.state, .collapsed)
     }
 
-    func testExpandWhileCapturingThenStoppingRestoresTheExpandedPresentation() {
+    func testHoldShowsEvenTheAlwaysHiddenSectionAndHidesItAgainAfterwards() {
         let engine = makeEngine()
         engine.updateAlwaysHiddenSection(enabled: true, separatorHidden: true)
-        visibility.succeed(visibility.requests.count - 1)
-        engine.collapse { _ in }
-        let collapsed = visibility.succeed(visibility.requests.count - 1)
+        let expanded = visibility.succeed(visibility.requests.count - 1)
 
         capture.set(true)
-        XCTAssertTrue(collapsed.isInvalidated)
+        XCTAssertTrue(expanded.isInvalidated)
         let requestsWhileCapturing = visibility.requests.count
         engine.expand()
+        engine.updateAlwaysHiddenSection(enabled: true, separatorHidden: true)
         XCTAssertEqual(visibility.requests.count, requestsWhileCapturing, "nothing is hidden while capturing, not even always-hidden")
 
         capture.set(false)
+        XCTAssertEqual(visibility.requests.count, requestsWhileCapturing + 1)
         XCTAssertEqual(visibility.requests.last?.bundles, ["com.dwarvesv.minimalbar", "com.hidden", "com.visible"])
     }
 
-    func testCaptureStartingDuringActivationDropsTheResultButStillCollapses() {
+    func testCaptureStartingDuringActivationSupersedesTheCollapse() {
         let engine = makeEngine()
         var results: [CollapseResult] = []
         engine.collapse { results.append($0) }
@@ -460,18 +468,21 @@ final class NativeVisibilityEngineTests: XCTestCase {
         let late = visibility.succeed(0)
 
         XCTAssertTrue(late.isInvalidated)
-        XCTAssertEqual(results, [.collapsed])
-        XCTAssertEqual(engine.state, .collapsed)
+        XCTAssertEqual(results, [], "overtaken, as by an expand")
+        XCTAssertEqual(engine.state, .expanded)
     }
 
     func testUnchangedCaptureStateLeavesTheRestrictionAlone() {
         let engine = makeEngine()
+        var holdChanges = 0
+        engine.onHoldChange = { holdChanges += 1 }
         engine.collapse { _ in }
         let collapsed = visibility.succeed(0)
 
         capture.set(false)
         XCTAssertFalse(collapsed.isInvalidated)
         XCTAssertEqual(visibility.requests.count, 1)
+        XCTAssertEqual(holdChanges, 0)
     }
 
     func testSystemOverflowIsOnlyRevealedWhileExpanded() {
@@ -485,6 +496,20 @@ final class NativeVisibilityEngineTests: XCTestCase {
         engine.revealSystemOverflow()
         XCTAssertEqual(systemOverflow.pendingPresses.count, 1)
         XCTAssertTrue(systemOverflow.pendingPresses[0]())
+    }
+
+    func testSystemOverflowIsNotRevealedWhileHeldOpen() {
+        let engine = makeEngine()
+        engine.revealSystemOverflow()
+        capture.set(true)
+        XCTAssertFalse(systemOverflow.pendingPresses[0](), "a press still pending when the hold starts is dropped")
+
+        engine.revealSystemOverflow()
+        XCTAssertEqual(systemOverflow.pendingPresses.count, 1, "expanded, but not because the user asked")
+
+        capture.set(false)
+        engine.revealSystemOverflow()
+        XCTAssertEqual(systemOverflow.pendingPresses.count, 2)
     }
 
     func testCollapsingBeforeTheButtonAppearsDropsThePress() {
@@ -514,5 +539,6 @@ final class LegacyLengthEngineTests: XCTestCase {
         engine.expand()
         XCTAssertEqual(engine.state, .expanded)
         XCTAssertEqual(items.separatorItem.length, 20)
+        XCTAssertFalse(engine.isHeldOpen)
     }
 }

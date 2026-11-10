@@ -62,6 +62,10 @@ struct CollapseBlockers: OptionSet {
     // in a window the collapse can dismiss (#170).
     static let pointerInMenuBar = CollapseBlockers(rawValue: 1 << 0)
     static let preferencesWindowVisible = CollapseBlockers(rawValue: 1 << 1)
+
+    // The engine cannot hide anything right now and shows the whole bar
+    // (MenuBarEngine.isHeldOpen).
+    static let heldOpen = CollapseBlockers(rawValue: 1 << 2)
 }
 
 enum CollapseTrigger {
@@ -75,12 +79,19 @@ enum CollapseVerdict {
     case proceed
     // Not now; ask again after another auto-collapse interval.
     case deferred
+    // Not until the blocker is gone, and whoever lifts it follows up.
+    case refused
 }
 
 // Whether a collapse goes ahead. Kept as a pure mapping, like the resolver
 // above, so the rules are unit-testable without a live menu bar.
 enum CollapsePolicy {
     static func verdict(for trigger: CollapseTrigger, blockers: CollapseBlockers) -> CollapseVerdict {
+        // Nothing can be hidden, whoever asks. Checked first, so the timer
+        // does not keep re-arming through a hold of unknown length.
+        if blockers.contains(.heldOpen) {
+            return .refused
+        }
         // Only the timer waits: a collapse the user asked for is the user's call.
         if trigger == .autoHide && !blockers.isEmpty {
             return .deferred

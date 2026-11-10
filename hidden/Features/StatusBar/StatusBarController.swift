@@ -43,6 +43,12 @@ class StatusBarController: MenuBarItemProvider {
     
     private var isToggle = false
 
+    // What was last asked for, by the user or the auto-collapse timer. A hold
+    // (the engine showing the whole bar, see MenuBarEngine.isHeldOpen) expands
+    // without changing this, so the bar goes back to it when the hold ends.
+    // Starts true: the bar collapses at launch.
+    private var wantsCollapsed = true
+
     private var hoverMonitor: Any?
     private var hoverDwellTimer: Timer?
 
@@ -73,6 +79,7 @@ class StatusBarController: MenuBarItemProvider {
         var blockers: CollapseBlockers = []
         if isMouseInMenuBar { blockers.insert(.pointerInMenuBar) }
         if isPreferencesWindowVisible { blockers.insert(.preferencesWindowVisible) }
+        if menuBarEngine.isHeldOpen { blockers.insert(.heldOpen) }
         return blockers
     }
     
@@ -80,6 +87,7 @@ class StatusBarController: MenuBarItemProvider {
     init() {
         setupUI()
         restoreRemovedStatusItems()
+        observeEngineHold()
         setupAlwayHideStatusBar()
         applyHoverToExpand()
         applyArrowVisibility()
@@ -163,6 +171,37 @@ class StatusBarController: MenuBarItemProvider {
         // Create the engine now so one that does not use the separator (macOS 27
         // native hiding) takes it back out before it is ever drawn.
         _ = menuBarEngine
+    }
+
+    private func observeEngineHold() {
+        menuBarEngine.onHoldChange = { [weak self] in
+            self?.engineHoldDidChange()
+        }
+        // Already held when a microphone or camera was in use at launch.
+        updateArrowForHold()
+    }
+
+    // The engine has expanded by itself when a hold starts. That is not the
+    // user's expand, so expandMenubar() is not used: it would bring this app
+    // to the front and into the Dock in the middle of a call.
+    private func engineHoldDidChange() {
+        updateArrowForHold()
+        guard !menuBarEngine.isHeldOpen else { return }
+        if wantsCollapsed {
+            collapseMenuBar()
+        } else {
+            autoCollapseIfNeeded()
+        }
+    }
+
+    // While held the arrow cannot toggle, and looks it. Its context menu still
+    // opens.
+    private func updateArrowForHold() {
+        guard let button = btnExpandCollapse.button else { return }
+        button.appearsDisabled = menuBarEngine.isHeldOpen
+        if menuBarEngine.isHeldOpen {
+            button.image = Assets.collapseImage
+        }
     }
 
     private func setupUI() {
@@ -303,6 +342,7 @@ class StatusBarController: MenuBarItemProvider {
         } else if menuBarEngine.state == .calibrating {
             // The first press started a collapse that has not landed yet;
             // expanding supersedes it.
+            wantsCollapsed = false
             menuBarEngine.expand()
             autoCollapseIfNeeded()
         }
@@ -316,9 +356,12 @@ class StatusBarController: MenuBarItemProvider {
             // Intentionally unbounded; each re-arm invalidates the previous timer,
             // so deferral never accumulates timers.
             return startTimerToAutoHide()
+        case .refused:
+            return
         case .proceed:
             break
         }
+        wantsCollapsed = true
         guard menuBarEngine.isArrangementValid && !self.isCollapsed else {
             autoCollapseIfNeeded()
             return
@@ -359,6 +402,7 @@ class StatusBarController: MenuBarItemProvider {
 
     private func expandMenubar() {
         guard self.isCollapsed else {return}
+        wantsCollapsed = false
         menuBarEngine.expand()
         if let button = btnExpandCollapse.button {
             button.image = Assets.collapseImage

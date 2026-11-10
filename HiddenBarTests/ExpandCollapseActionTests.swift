@@ -86,4 +86,14 @@ final class CollapsePolicyTests: XCTestCase {
     func testARequestIsNotDeferred() {
         XCTAssertEqual(CollapsePolicy.verdict(for: .request, blockers: [.pointerInMenuBar, .preferencesWindowVisible]), .proceed)
     }
+
+    func testAHoldRefusesEveryCollapse() {
+        XCTAssertEqual(CollapsePolicy.verdict(for: .request, blockers: .heldOpen), .refused)
+        XCTAssertEqual(CollapsePolicy.verdict(for: .autoHide, blockers: .heldOpen), .refused)
+    }
+
+    // Deferring would re-arm the timer for as long as the hold lasts.
+    func testAHoldWinsOverDeferring() {
+        XCTAssertEqual(CollapsePolicy.verdict(for: .autoHide, blockers: [.heldOpen, .pointerInMenuBar]), .refused)
+    }
 }

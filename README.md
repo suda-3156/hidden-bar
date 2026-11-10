@@ -19,6 +19,10 @@ Behavior (macOS 27 items apply to the direct, non-App Store build only):
   the `«` overflow button macOS shows when icons do not fit beside the notch. macOS gives no
   way to open it except a click, so Hidden Bar synthesizes one: a menu open
   at that moment closes, and the pointer occasionally does not return.
+- **The bar is held expanded while a microphone or camera is in use**
+  (macOS 27): the cherry-picked fix below stopped hiding but left the bar
+  looking collapsed. Here the bar expands, the dimmed arrow and the shortcut
+  do not close it, and it returns to its previous state afterwards.
 - **Hover-to-expand checkbox**: upstream only offered it as a Terminal default.
   It now has a Preferences checkbox and takes effect without a relaunch.
 - **Clearing the shortcut removes it** from the preferences instead of storing

@@ -17,6 +17,15 @@ protocol MenuBarEngine: AnyObject {
     func collapse(completion: @escaping (CollapseResult) -> Void)
     func expand()
 
+    // True while the engine has to show the whole bar and cannot hide anything.
+    // It expands by itself when that starts and answers collapse with
+    // .unavailable until it ends; it never collapses again on its own, so
+    // going back to what the user wanted is the controller's decision.
+    var isHeldOpen: Bool { get }
+
+    // Called on the main queue when isHeldOpen has changed.
+    var onHoldChange: (() -> Void)? { get set }
+
     func updateAlwaysHiddenSection(enabled: Bool, separatorHidden: Bool)
 
     // Whether the arrow is hidden along with the hidden section while collapsed.
@@ -25,8 +34,8 @@ protocol MenuBarEngine: AnyObject {
     func updateArrowHidden(whenCollapsed hidden: Bool)
 
     // Also shows the icons that did not fit beside the notch, where macOS offers
-    // its own overflow for them. Only meaningful while expanded; engines on a
-    // system without that overflow ignore it.
+    // its own overflow for them. Only meaningful while expanded, and ignored
+    // while held open; engines on a system without that overflow ignore it.
     func revealSystemOverflow()
 
     // Whether the user's ⌘-drag arrangement lets the engine hide anything: its

@@ -25,7 +25,8 @@ math, collapse state machine) are HIGH RISK and require a mandatory review-team 
   clock, displays, keyboard, volume, wifi, screenMirroring, primaryBentoBox. The clock
   and other MenuBarAgent items expose no AX actions, so the clock cannot be pressed
   through Accessibility. Shipped mitigation: no restriction while a mic or camera is in
-  use (`CaptureActivityMonitor`). Still open: Now Playing / Live Activities hidden, clock
+  use (`CaptureActivityMonitor`); the bar is held expanded and cannot be collapsed until
+  it stops. Still open: Now Playing / Live Activities hidden, clock
   click inert, screen recording not detected (no public API). Revisit if Apple adds an
   origin or a public API.
 - **App Store build still broken on 27.** The sandbox denies `mach-lookup

@@ -58,6 +58,10 @@ final class LegacyLengthEngine: MenuBarEngine {
         items?.separatorItem.length = expandedLength
     }
 
+    // Never held: moving icons off screen hides nothing macOS adds to the bar.
+    let isHeldOpen = false
+    var onHoldChange: (() -> Void)?
+
     func updateAlwaysHiddenSection(enabled: Bool, separatorHidden: Bool) {
         let length: CGFloat
         if separatorHidden {

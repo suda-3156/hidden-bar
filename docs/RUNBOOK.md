@@ -54,6 +54,15 @@ Standard checks before any release:
 - arrow double click (same setup): with the preference off, it behaves as two
   single clicks; on, it ends expanded with the overflow open as for the
   shortcut, also with no shortcut set;
+- microphone or camera hold (macOS 27 direct build, from `/Applications`):
+  starting a camera while collapsed expands the bar, dims the arrow and shows
+  the recording capsule; the arrow, the shortcut and the auto-collapse timer
+  do not collapse it, a double press or double click does not open the
+  overflow, and the arrow's right-click menu still opens; stopping
+  the camera collapses it again. Starting from expanded, it stays expanded
+  after the camera stops and auto collapse then runs as usual. With "use full
+  menu bar on expanding" on, the frontmost app keeps focus when the camera
+  starts and no Dock icon appears;
 - autostart pref on -> `AutoStart: SMAppService.mainApp.status = 1` on stderr;
   off -> `= 0` (run the binary directly to capture stderr);
 - localization tables stay parseable: `plutil -lint hidden/*.lproj/*.strings`.

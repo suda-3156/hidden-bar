@@ -40,7 +40,8 @@ import AppKit
 //   and neither helps: userSessionTransition ignores the allow-list and hides
 //   nothing, and campoDrag is rejected (measured on 27.0, 26A428). To keep that
 //   capsule visible, no restriction is held while a microphone or camera is in
-//   use; the bar is whole until capture stops, then hiding resumes.
+//   use: the engine expands, reports isHeldOpen and refuses to collapse until
+//   capture stops.
 // - macOS's own items that the allow-list can name (see systemItemsToKeep) are
 //   always kept visible: Accessibility cannot tell them apart, so they cannot be
 //   mapped to sections.
@@ -79,7 +80,15 @@ final class NativeVisibilityEngine: MenuBarEngine {
     private var generation = 0
     private var lastUnavailableReason: String?
     // The capture state last acted on, so only a change moves the restriction.
+    // Everything else reads this rather than the monitor, so the engine never
+    // acts on a change it has not reported through onHoldChange yet.
     private var isCaptureActive: Bool
+
+    var isHeldOpen: Bool {
+        return isCaptureActive
+    }
+
+    var onHoldChange: (() -> Void)?
 
     private var alwaysHiddenEnabled = false
     private var alwaysHiddenSeparatorHidden = false
@@ -109,6 +118,9 @@ final class NativeVisibilityEngine: MenuBarEngine {
     }
 
     func collapse(completion: @escaping (CollapseResult) -> Void) {
+        guard !isHeldOpen else {
+            return completion(.unavailable)
+        }
         switch state {
         case .collapsed:
             return completion(.collapsed)
@@ -186,12 +198,19 @@ final class NativeVisibilityEngine: MenuBarEngine {
 
     // The overflow button only exists once macOS has reflowed the expanded bar,
     // which it does on its own time; the press is dropped if the bar was
-    // collapsed again in the meantime.
+    // collapsed again in the meantime. Nor is anything pressed while held open,
+    // including a press still pending when the hold starts: the bar is
+    // expanded then, but not because the user asked, and the synthesized click
+    // would move the pointer and close menus in the middle of a call.
     func revealSystemOverflow() {
-        guard state == .expanded else { return }
+        guard canRevealSystemOverflow else { return }
         systemOverflow.reveal { [weak self] in
-            self?.state == .expanded
+            self?.canRevealSystemOverflow ?? false
         }
+    }
+
+    private var canRevealSystemOverflow: Bool {
+        return state == .expanded && !isHeldOpen
     }
 
     // Native hiding does not depend on display geometry, so only drop the cached
@@ -206,7 +225,7 @@ final class NativeVisibilityEngine: MenuBarEngine {
     // while "hide separators" is on, otherwise everything is revealed by dropping
     // the restriction altogether.
     private func applyExpandedPresentation() {
-        guard alwaysHiddenEnabled && alwaysHiddenSeparatorHidden, visibility.isAvailable, inventory.isAuthorized else {
+        guard !isHeldOpen, alwaysHiddenEnabled && alwaysHiddenSeparatorHidden, visibility.isAvailable, inventory.isAuthorized else {
             return releaseAssertion()
         }
         withLayout { [weak self] layout in
@@ -246,16 +265,15 @@ final class NativeVisibilityEngine: MenuBarEngine {
 
     // Activates the new restriction before dropping the old one, so switching
     // between collapsed and expanded never flashes the whole bar visible.
-    // While a microphone or camera is in use nothing is activated, but the
-    // request still succeeds: the bar keeps the state the user asked for and the
-    // restriction follows once capture stops.
     private func activate(allowing bundles: [String], keepingArrow: Bool = true, completion: @escaping (Bool) -> Void) {
+        // Callers do not get here while held open; any restriction at all would
+        // hide the recording capsule, so this is checked once more.
+        guard !isHeldOpen else {
+            releaseAssertion()
+            return completion(false)
+        }
         generation += 1
         let generation = self.generation
-        guard !captureActivity.isActive else {
-            dropAssertionForCapture()
-            return completion(true)
-        }
         let own = keepingArrow ? ownBundleIdentifier.map { [$0] } ?? [] : []
         let allowed = own + bundles
         visibility.activate(allowedSystemItems: Self.systemItemsToKeep,
@@ -265,11 +283,6 @@ final class NativeVisibilityEngine: MenuBarEngine {
                 return
             }
             switch result {
-            case .success(let newAssertion) where self.captureActivity.isActive:
-                // Capture started while this was in flight.
-                newAssertion.invalidate()
-                self.dropAssertionForCapture()
-                completion(true)
             case .success(let newAssertion):
                 let old = self.assertion
                 self.assertion = newAssertion
@@ -306,29 +319,28 @@ final class NativeVisibilityEngine: MenuBarEngine {
         assertion = nil
     }
 
-    // Unlike releaseAssertion, an activation in flight is not superseded: it
-    // still answers the collapse that started it, and drops its own result
-    // because capture is active.
-    private func dropAssertionForCapture() {
-        assertion?.invalidate()
-        assertion = nil
-    }
-
     private func captureActivityDidChange() {
         let isActive = captureActivity.isActive
         guard isActive != isCaptureActive else { return }
         isCaptureActive = isActive
         if isActive {
-            NSLog("NativeVisibility: a microphone or camera is in use; showing the whole menu bar until it stops")
-            dropAssertionForCapture()
+            NSLog("NativeVisibility: a microphone or camera is in use; holding the whole menu bar open until it stops")
+            // Supersedes a collapse in flight too: its completion never runs,
+            // as when an expand overtakes it, and its late result is released.
+            setSeparatorsVisible(true)
+            if state == .collapsed || state == .calibrating {
+                state = .expanded
+            }
+            releaseAssertion()
         } else {
-            NSLog("NativeVisibility: capture stopped; hiding again")
+            NSLog("NativeVisibility: capture stopped; hiding is possible again")
             restorePresentation()
         }
+        onHoldChange?()
     }
 
     // Re-applies the current state, from a fresh read of the bar when nothing
-    // restricts it (capture just stopped), else from the cached sections. A
+    // restricts it (a hold just ended), else from the cached sections. A
     // failure leaves the bar whole (fail open).
     private func restorePresentation() {
         switch state {
@@ -340,7 +352,8 @@ final class NativeVisibilityEngine: MenuBarEngine {
         case .expanded:
             applyExpandedPresentation()
         case .calibrating, .unavailable:
-            // An activation in flight checks capture itself; unavailable holds nothing.
+            // An activation in flight applies what is current when it lands;
+            // unavailable holds nothing.
             break
         }
     }

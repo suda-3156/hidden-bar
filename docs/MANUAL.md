@@ -55,9 +55,12 @@ cannot opt out of them. While the arrow is collapsed:
 - **Recording indicators:** macOS hides the menu-bar indicator that names the
   app using the microphone or camera (the orange or green capsule). The small
   colored dot in the top-right corner of the screen still shows. To keep the
-  capsule too, Hidden Bar stops hiding and shows the whole bar as soon as any
-  app starts using the microphone or a camera, and resumes when that stops.
-  The arrow keeps its collapsed look in the meantime.
+  capsule too, Hidden Bar expands as soon as any app starts using the
+  microphone or a camera, and shows the always-hidden section as well. The
+  arrow is dimmed and the bar stays expanded until that stops: the arrow, the
+  shortcut and auto collapse do not close it, and a double press does not open
+  the `«` button (the arrow's right-click menu still opens). Afterwards the
+  bar goes back to how it was, collapsed if it was collapsed.
 - **Screen recording: not covered.** macOS offers no public way to tell that
   another app is recording the screen, so Hidden Bar keeps hiding. The purple
   dot in the screen corner still shows.
