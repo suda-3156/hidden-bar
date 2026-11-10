@@ -68,6 +68,13 @@ class StatusBarController: MenuBarItemProvider {
         let wc = PreferencesWindowController.shared
         return wc.isWindowLoaded && (wc.window?.isVisible ?? false)
     }
+
+    private var collapseBlockers: CollapseBlockers {
+        var blockers: CollapseBlockers = []
+        if isMouseInMenuBar { blockers.insert(.pointerInMenuBar) }
+        if isPreferencesWindowVisible { blockers.insert(.preferencesWindowVisible) }
+        return blockers
+    }
     
     //MARK: - Methods
     init() {
@@ -302,7 +309,16 @@ class StatusBarController: MenuBarItemProvider {
         menuBarEngine.revealSystemOverflow()
     }
 
-    private func collapseMenuBar() {
+    private func collapseMenuBar(by trigger: CollapseTrigger = .request) {
+        switch CollapsePolicy.verdict(for: trigger, blockers: collapseBlockers) {
+        case .deferred:
+            // Don't yank the bar shut mid-interaction: defer and re-arm.
+            // Intentionally unbounded; each re-arm invalidates the previous timer,
+            // so deferral never accumulates timers.
+            return startTimerToAutoHide()
+        case .proceed:
+            break
+        }
         guard menuBarEngine.isArrangementValid && !self.isCollapsed else {
             autoCollapseIfNeeded()
             return
@@ -367,15 +383,7 @@ class StatusBarController: MenuBarItemProvider {
         timer?.invalidate()
         self.timer = Timer.scheduledTimer(withTimeInterval: Preferences.numberOfSecondForAutoHide, repeats: false) { [weak self] _ in
             guard let self = self, Preferences.isAutoHide else { return }
-            // Don't yank the bar shut mid-interaction: while the pointer is in the
-            // menubar (hovering, clicking, dragging icons), defer and re-arm.
-            // Intentionally unbounded; each re-arm invalidates the previous timer,
-            // so deferral never accumulates timers.
-            if self.isMouseInMenuBar || self.isPreferencesWindowVisible {
-                self.startTimerToAutoHide()
-            } else {
-                self.collapseMenuBar()
-            }
+            self.collapseMenuBar(by: .autoHide)
         }
     }
     

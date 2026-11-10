@@ -69,3 +69,21 @@ final class DoublePressDetectorTests: XCTestCase {
         XCTAssertFalse(detector.isDoublePress(at: start.addingTimeInterval(0.3)))
     }
 }
+
+final class CollapsePolicyTests: XCTestCase {
+
+    func testNothingBlocksByDefault() {
+        XCTAssertEqual(CollapsePolicy.verdict(for: .autoHide, blockers: []), .proceed)
+        XCTAssertEqual(CollapsePolicy.verdict(for: .request, blockers: []), .proceed)
+    }
+
+    func testAutoHideWaitsWhileTheUserIsBusy() {
+        XCTAssertEqual(CollapsePolicy.verdict(for: .autoHide, blockers: .pointerInMenuBar), .deferred)
+        XCTAssertEqual(CollapsePolicy.verdict(for: .autoHide, blockers: .preferencesWindowVisible), .deferred)
+    }
+
+    // The arrow and the shortcut are pressed with the pointer wherever it is.
+    func testARequestIsNotDeferred() {
+        XCTAssertEqual(CollapsePolicy.verdict(for: .request, blockers: [.pointerInMenuBar, .preferencesWindowVisible]), .proceed)
+    }
+}

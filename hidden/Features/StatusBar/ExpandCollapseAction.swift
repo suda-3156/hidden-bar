@@ -51,3 +51,40 @@ struct DoublePressDetector {
         return false
     }
 }
+
+// Why the hidden section should stay open for now. Each is checked where a
+// collapse is about to happen; nothing here watches for them going away.
+struct CollapseBlockers: OptionSet {
+    let rawValue: Int
+
+    // The user is in the middle of something a collapse would cut short:
+    // hovering, clicking or dragging icons in the bar, or editing preferences
+    // in a window the collapse can dismiss (#170).
+    static let pointerInMenuBar = CollapseBlockers(rawValue: 1 << 0)
+    static let preferencesWindowVisible = CollapseBlockers(rawValue: 1 << 1)
+}
+
+enum CollapseTrigger {
+    // Asked for outright: the arrow, the shortcut, the collapse at launch.
+    case request
+    // The auto-collapse timer ran out.
+    case autoHide
+}
+
+enum CollapseVerdict {
+    case proceed
+    // Not now; ask again after another auto-collapse interval.
+    case deferred
+}
+
+// Whether a collapse goes ahead. Kept as a pure mapping, like the resolver
+// above, so the rules are unit-testable without a live menu bar.
+enum CollapsePolicy {
+    static func verdict(for trigger: CollapseTrigger, blockers: CollapseBlockers) -> CollapseVerdict {
+        // Only the timer waits: a collapse the user asked for is the user's call.
+        if trigger == .autoHide && !blockers.isEmpty {
+            return .deferred
+        }
+        return .proceed
+    }
+}
