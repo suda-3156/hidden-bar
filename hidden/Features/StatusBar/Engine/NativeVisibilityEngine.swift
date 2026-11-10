@@ -52,6 +52,11 @@ import AppKit
 //   stale positions. They are re-read on the next collapse from an unrestricted
 //   bar, so an app launched while collapsed stays hidden until then, the same
 //   as a new icon landing in the hidden section under the old mechanism.
+//   The collapse that follows a hold is the exception: it reuses the sections
+//   of the collapse the hold interrupted, although the bar was unrestricted in
+//   between, because the read takes about a second and would delay hiding
+//   right when capture stops. Icons moved or apps launched during the hold are
+//   picked up by the collapse after the next expand.
 final class NativeVisibilityEngine: MenuBarEngine {
     // System item identifiers to keep visible. Unknown identifiers are ignored,
     // so the range covers items a given Mac does not have. On 27.0, 0-63 resolves
@@ -89,6 +94,10 @@ final class NativeVisibilityEngine: MenuBarEngine {
     }
 
     var onHoldChange: (() -> Void)?
+
+    // True from a hold that began while collapsed until the next collapse has
+    // taken the cached sections, see the limits above.
+    private var reusesLayoutAfterHold = false
 
     private var alwaysHiddenEnabled = false
     private var alwaysHiddenSeparatorHidden = false
@@ -153,6 +162,8 @@ final class NativeVisibilityEngine: MenuBarEngine {
                 self.state = .expanded
                 return completion(.unavailable)
             }
+            // Only this once: a retry after a failure reads the bar afresh.
+            self.reusesLayoutAfterHold = false
             let arrowHidden = self.arrowHiddenWhenCollapsed
             self.activate(allowing: layout.bundles(in: [.visible]), keepingArrow: !arrowHidden) { [weak self] succeeded in
                 guard let self = self else { return }
@@ -172,6 +183,7 @@ final class NativeVisibilityEngine: MenuBarEngine {
     func expand() {
         setSeparatorsVisible(true)
         state = .expanded
+        reusesLayoutAfterHold = false
         applyExpandedPresentation()
     }
 
@@ -218,6 +230,7 @@ final class NativeVisibilityEngine: MenuBarEngine {
     func invalidateLayout() {
         if assertion == nil {
             layout = nil
+            reusesLayoutAfterHold = false
         }
     }
 
@@ -238,10 +251,11 @@ final class NativeVisibilityEngine: MenuBarEngine {
     }
 
     // The sections as the user arranged them. Read fresh only from an
-    // unrestricted bar; while a restriction is active the cached ones stand in.
+    // unrestricted bar; while a restriction is active the cached ones stand in,
+    // as they do once after a hold.
     // Superseded by any later expand or activation, like an activation is.
     private func withLayout(_ body: @escaping (MenuBarLayout?) -> Void) {
-        if assertion != nil {
+        if assertion != nil || reusesLayoutAfterHold {
             return body(layout)
         }
         guard let arrow = items?.toggleItem,
@@ -328,6 +342,7 @@ final class NativeVisibilityEngine: MenuBarEngine {
             // Supersedes a collapse in flight too: its completion never runs,
             // as when an expand overtakes it, and its late result is released.
             setSeparatorsVisible(true)
+            reusesLayoutAfterHold = state == .collapsed && layout != nil
             if state == .collapsed || state == .calibrating {
                 state = .expanded
             }

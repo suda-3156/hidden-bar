@@ -60,7 +60,9 @@ cannot opt out of them. While the arrow is collapsed:
   arrow is dimmed and the bar stays expanded until that stops: the arrow, the
   shortcut and auto collapse do not close it, and a double press does not open
   the `«` button (the arrow's right-click menu still opens). Afterwards the
-  bar goes back to how it was, collapsed if it was collapsed.
+  bar goes back to how it was, collapsed if it was collapsed. Icons you moved
+  across the arrow in the meantime, and apps launched then, take their new
+  place the next time you expand and collapse.
 - **Screen recording: not covered.** macOS offers no public way to tell that
   another app is recording the screen, so Hidden Bar keeps hiding. The purple
   dot in the screen corner still shows.

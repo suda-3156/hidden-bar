@@ -442,6 +442,56 @@ final class NativeVisibilityEngineTests: XCTestCase {
         XCTAssertEqual(engine.state, .collapsed)
     }
 
+    func testCollapseAfterAHoldReusesTheSectionsReadBeforeIt() {
+        let engine = makeEngine()
+        engine.collapse { _ in }
+        visibility.succeed(0)
+        capture.set(true)
+        inventory.items = [item("com.hidden", x: 1100), item("com.moved", x: 1400)]
+        capture.set(false)
+        let snapshotsBefore = inventory.snapshots
+
+        engine.collapse { _ in }
+        XCTAssertEqual(inventory.snapshots, snapshotsBefore, "no second-long read right when capture stops")
+        XCTAssertEqual(visibility.requests.last?.bundles, ["com.dwarvesv.minimalbar", "com.visible"])
+        visibility.succeed(1)
+
+        // What changed during the hold shows up one expand later.
+        engine.expand()
+        engine.collapse { _ in }
+        XCTAssertEqual(inventory.snapshots, snapshotsBefore + 1)
+        XCTAssertEqual(visibility.requests.last?.bundles, ["com.dwarvesv.minimalbar", "com.moved"])
+    }
+
+    func testCollapseAfterAHoldThatBeganExpandedReadsTheSectionsAfresh() {
+        let engine = makeEngine()
+        engine.collapse { _ in }
+        visibility.succeed(0)
+        engine.expand()
+        capture.set(true)
+        inventory.items = [item("com.hidden", x: 1100), item("com.moved", x: 1400)]
+        capture.set(false)
+        let snapshotsBefore = inventory.snapshots
+
+        engine.collapse { _ in }
+        XCTAssertEqual(inventory.snapshots, snapshotsBefore + 1, "the bar was expanded for the user to rearrange")
+        XCTAssertEqual(visibility.requests.last?.bundles, ["com.dwarvesv.minimalbar", "com.moved"])
+    }
+
+    func testAFailedCollapseAfterAHoldDoesNotKeepTheOldSections() {
+        let engine = makeEngine()
+        engine.collapse { _ in }
+        visibility.succeed(0)
+        capture.set(true)
+        capture.set(false)
+        engine.collapse { _ in }
+        visibility.fail(1)
+        let snapshotsBefore = inventory.snapshots
+
+        engine.collapse { _ in }
+        XCTAssertEqual(inventory.snapshots, snapshotsBefore + 1)
+    }
+
     func testHoldShowsEvenTheAlwaysHiddenSectionAndHidesItAgainAfterwards() {
         let engine = makeEngine()
         engine.updateAlwaysHiddenSection(enabled: true, separatorHidden: true)
