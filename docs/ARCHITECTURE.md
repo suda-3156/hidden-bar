@@ -105,6 +105,10 @@ A full-tree audit (2026-06) scored 9/10 with hygiene-level findings only.
 - **macOS 27**: the menu bar re-architecture in macOS 27 betas
   (`NSMenuBarNavigationSceneExtension`) breaks length-inflation hiding entirely
   (issue #360). A different mechanism may be required.
-- **Other apps' open menus**: interaction-awareness is pointer-position-based;
-  a pointer deep inside another app's open dropdown is below the menubar band,
-  so the collapse can still fire there.
+- **Other apps' open menus**: no API reports them. The auto-collapse timer
+  infers one from the window list (`OpenMenuDetector`: a window at layer
+  24...101 hanging from a menu bar) and defers while the owning app's icons
+  are on the hidden side of the arrow, read for that one app through
+  Accessibility at that moment. Only `NativeVisibilityEngine` can read that,
+  so under `LegacyLengthEngine` a pointer deep inside another app's open
+  dropdown is below the menubar band and the collapse can still fire there.

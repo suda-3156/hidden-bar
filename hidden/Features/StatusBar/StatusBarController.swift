@@ -75,10 +75,22 @@ class StatusBarController: MenuBarItemProvider {
         return wc.isWindowLoaded && (wc.window?.isVisible ?? false)
     }
 
+    // A collapse would take the icon away from under its own menu. A menu
+    // window tells only which process owns it, so the engine is asked whether
+    // that app's icons are among the ones a collapse hides.
+    private var isHiddenAppMenuOpen: Bool {
+        guard let owner = OpenMenuDetector.ownersOfOpenMenus().first(where: menuBarEngine.hidesStatusItems(ofProcess:)) else {
+            return false
+        }
+        NSLog("AutoCollapse: a menu of \(NSRunningApplication(processIdentifier: owner)?.bundleIdentifier ?? "pid \(owner)") is open")
+        return true
+    }
+
     private var collapseBlockers: CollapseBlockers {
         var blockers: CollapseBlockers = []
         if isMouseInMenuBar { blockers.insert(.pointerInMenuBar) }
         if isPreferencesWindowVisible { blockers.insert(.preferencesWindowVisible) }
+        if isHiddenAppMenuOpen { blockers.insert(.hiddenAppMenuOpen) }
         if menuBarEngine.isHeldOpen { blockers.insert(.heldOpen) }
         return blockers
     }

@@ -62,6 +62,9 @@ struct CollapseBlockers: OptionSet {
     // in a window the collapse can dismiss (#170).
     static let pointerInMenuBar = CollapseBlockers(rawValue: 1 << 0)
     static let preferencesWindowVisible = CollapseBlockers(rawValue: 1 << 1)
+    // A menu or panel is open from an icon the collapse would hide. The pointer
+    // is down in the menu then, below the menu bar.
+    static let hiddenAppMenuOpen = CollapseBlockers(rawValue: 1 << 3)
 
     // The engine cannot hide anything right now and shows the whole bar
     // (MenuBarEngine.isHeldOpen).

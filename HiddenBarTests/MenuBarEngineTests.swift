@@ -41,6 +41,12 @@ private final class FakeInventory: MenuBarInventoryProviding {
         snapshots += 1
         completion(items)
     }
+
+    var itemsByProcess: [pid_t: [MenuBarInventoryItem]] = [:]
+
+    func items(ofProcess pid: pid_t) -> [MenuBarInventoryItem] {
+        return itemsByProcess[pid] ?? []
+    }
 }
 
 private final class FakeAssertion: NativeVisibilityAssertion {
@@ -382,6 +388,38 @@ final class NativeVisibilityEngineTests: XCTestCase {
         XCTAssertEqual(results, [])
     }
 
+    // Read afresh, without the sections cached by a collapse: an icon behind
+    // macOS's overflow button is missing from a read taken while it is closed.
+    func testWhetherAnAppIsHiddenIsReadFromWhereItsIconsAreNow() {
+        inventory.itemsByProcess = [1: [item("com.hidden", x: 1100)],
+                                    2: [item("com.visible", x: 1400)],
+                                    3: [item("com.split", x: 1100), item("com.split", x: 1400)],
+                                    4: [item("com.dwarvesv.minimalbar", x: 1100)],
+                                    5: [item("com.apple.controlcenter", x: 1100)]]
+        let engine = makeEngine()
+
+        XCTAssertTrue(engine.hidesStatusItems(ofProcess: 1))
+        XCTAssertFalse(engine.hidesStatusItems(ofProcess: 2))
+        XCTAssertFalse(engine.hidesStatusItems(ofProcess: 3), "one visible icon keeps the app visible")
+        XCTAssertFalse(engine.hidesStatusItems(ofProcess: 4), "this app's arrow")
+        XCTAssertFalse(engine.hidesStatusItems(ofProcess: 5), "macOS's own items stay visible")
+        XCTAssertFalse(engine.hidesStatusItems(ofProcess: 6), "no icon at all, like an app's own menus")
+        XCTAssertEqual(inventory.snapshots, 0)
+    }
+
+    func testTheAlwaysHiddenSectionIsHiddenToo() {
+        inventory.itemsByProcess = [1: [item("com.always", x: 900)]]
+        let engine = makeEngine()
+        engine.updateAlwaysHiddenSection(enabled: true, separatorHidden: false)
+        XCTAssertTrue(engine.hidesStatusItems(ofProcess: 1))
+    }
+
+    func testWithoutAccessibilityNothingCountsAsHidden() {
+        inventory.itemsByProcess = [1: [item("com.hidden", x: 1100)]]
+        inventory.isAuthorized = false
+        XCTAssertFalse(makeEngine().hidesStatusItems(ofProcess: 1))
+    }
+
     func testDisplayChangeKeepsTheBarCollapsed() {
         let engine = makeEngine()
         engine.collapse { _ in }
@@ -590,5 +628,6 @@ final class LegacyLengthEngineTests: XCTestCase {
         XCTAssertEqual(engine.state, .expanded)
         XCTAssertEqual(items.separatorItem.length, 20)
         XCTAssertFalse(engine.isHeldOpen)
+        XCTAssertFalse(engine.hidesStatusItems(ofProcess: ProcessInfo.processInfo.processIdentifier))
     }
 }

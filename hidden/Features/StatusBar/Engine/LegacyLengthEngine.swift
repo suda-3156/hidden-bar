@@ -90,6 +90,13 @@ final class LegacyLengthEngine: MenuBarEngine {
         return MenuBarOrder.isItem(items?.alwaysHiddenItem, onHiddenSideOf: items?.separatorItem)
     }
 
+    // Moving icons off screen never needs to know whose they are, and the
+    // sandboxed build that uses this engine cannot read it through
+    // Accessibility.
+    func hidesStatusItems(ofProcess pid: pid_t) -> Bool {
+        return false
+    }
+
     func invalidateLayout() {
         guard state == .collapsed else { return }
         items?.separatorItem.length = collapsedLength

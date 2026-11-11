@@ -47,6 +47,14 @@ final class AccessibilityMenuBarInventory: MenuBarInventoryProviding {
         }
     }
 
+    func items(ofProcess pid: pid_t) -> [MenuBarInventoryItem] {
+        let bundleIdentifier = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier
+        return Self.statusItems(of: [(pid: pid, bundleIdentifier: bundleIdentifier)])
+    }
+
+    // An app whose icons macOS 27 folded behind its overflow button ("<<") has no
+    // AXExtrasMenuBar while that is closed, so it is missing here then (measured
+    // on 27.2).
     private static func statusItems(of apps: [(pid: pid_t, bundleIdentifier: String?)]) -> [MenuBarInventoryItem] {
         var items: [MenuBarInventoryItem] = []
         for app in apps {

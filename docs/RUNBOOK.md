@@ -63,6 +63,14 @@ Standard checks before any release:
   after the camera stops and auto collapse then runs as usual. With "use full
   menu bar on expanding" on, the frontmost app keeps focus when the camera
   starts and no Dock icon appears;
+- open menu of a hidden icon (macOS 27 direct build, from `/Applications`,
+  `numberOfSecondForAutoHide` set to 3): open the menu of an icon left of the
+  arrow and move the pointer down into it; the bar stays expanded past 2x the
+  window and logs `AutoCollapse: a menu of <bundle> is open`. Close the
+  menu with the pointer outside the menu bar and the bar collapses within the
+  window. Repeat with an icon shown through the `«` overflow button, opened
+  only after the bar was last collapsed. A menu of an icon right of the arrow
+  does not hold the bar, and the arrow collapses at once with the menu open;
 - autostart pref on -> `AutoStart: SMAppService.mainApp.status = 1` on stderr;
   off -> `= 0` (run the binary directly to capture stderr);
 - localization tables stay parseable: `plutil -lint hidden/*.lproj/*.strings`.

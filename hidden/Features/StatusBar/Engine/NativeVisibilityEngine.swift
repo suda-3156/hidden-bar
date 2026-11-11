@@ -327,6 +327,24 @@ final class NativeVisibilityEngine: MenuBarEngine {
         return MenuBarOrder.isItem(items?.alwaysHiddenItem, onHiddenSideOf: items?.toggleItem)
     }
 
+    // Read afresh rather than from the cached sections: an app whose icon sits
+    // behind macOS's overflow button is missing from any read taken while that
+    // button is closed, and its menu can only be opened with it open.
+    // Sectioned like a collapse would, so an app is hidden when none of its
+    // icons is visible.
+    func hidesStatusItems(ofProcess pid: pid_t) -> Bool {
+        guard inventory.isAuthorized,
+              let arrow = items?.toggleItem,
+              let boundary = itemFrame(arrow) else { return false }
+        let alwaysHiddenFrame = alwaysHiddenEnabled ? items?.alwaysHiddenItem.flatMap(itemFrame) : nil
+        let layout = MenuBarLayoutResolver.resolve(inventory: inventory.items(ofProcess: pid),
+                                                   separatorFrame: boundary,
+                                                   alwaysHiddenSeparatorFrame: alwaysHiddenFrame,
+                                                   isLTR: isLTR(),
+                                                   excludingBundle: ownBundleIdentifier)
+        return !layout.bundles(in: [.hidden, .alwaysHidden]).isEmpty
+    }
+
     private func releaseAssertion() {
         generation += 1
         assertion?.invalidate()

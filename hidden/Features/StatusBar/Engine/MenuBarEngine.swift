@@ -46,6 +46,11 @@ protocol MenuBarEngine: AnyObject {
     // Whether the always-hidden separator sits beyond the regular hidden section.
     var isAlwaysHiddenSeparatorPlaced: Bool { get }
 
+    // Whether a collapse now would hide the icons of the app running as `pid`,
+    // judged from where they are at this moment. False when the engine cannot
+    // tell which app owns which icon.
+    func hidesStatusItems(ofProcess pid: pid_t) -> Bool
+
     // Display geometry changed. Re-applies the collapse to the live items when
     // collapsed, so a hot-plug does not leave a stale length behind (PR #354).
     func invalidateLayout()

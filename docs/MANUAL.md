@@ -96,6 +96,11 @@ Expanding the arrow ends all of this immediately.
 
 - **It won't collapse mid-use**: while your pointer is anywhere in the menu bar,
   the auto-collapse countdown defers and restarts; it resumes when you leave.
+- **It won't close an open menu** (macOS 27 direct build): while a menu or panel
+  opened from an icon in the hidden or always-hidden section is showing, auto
+  collapse defers the same way. The bar can then collapse up to one full delay
+  after the menu closes. The arrow and the shortcut still collapse at once.
+  This includes icons shown with the `«` button beside the notch.
 - **Self-repair**: if the arrow or separator was ⌘-dragged off the bar (which
   used to make the app unreachable forever), they come back on next launch.
 - **Display changes**: plugging in or removing monitors re-sizes the hidden zone

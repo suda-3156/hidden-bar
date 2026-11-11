@@ -37,6 +37,10 @@ protocol MenuBarInventoryProviding: AnyObject {
     // while nothing is hidden: once a native visibility assertion is active,
     // hidden items report stale frames.
     func snapshot(completion: @escaping ([MenuBarInventoryItem]) -> Void)
+    // One app's status items, read now on the calling thread. Each call into
+    // the app can wait out the messaging timeout, so this is meant for a single
+    // app, not for the whole bar.
+    func items(ofProcess pid: pid_t) -> [MenuBarInventoryItem]
 }
 
 struct MenuBarLayout: Equatable {
