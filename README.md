@@ -22,7 +22,13 @@ Behavior (macOS 27 items apply to the direct, non-App Store build only):
 - **The bar is held expanded while a microphone or camera is in use**
   (macOS 27): the cherry-picked fix below stopped hiding but left the bar
   looking collapsed. Here the bar expands, the dimmed arrow and the shortcut
-  do not close it, and it returns to its previous state afterwards.
+  do not close it, and it returns to its previous state afterwards. Clicks
+  no longer stall after the camera has been used: the cherry-picked monitor
+  registered its listeners again on every change, and they piled up.
+- **Auto collapse waits while a hidden icon's menu is open** (macOS 27): a
+  menu or panel opened from an icon in the hidden or always-hidden section,
+  including one shown with `«`, keeps the bar expanded until it closes. The
+  arrow and the shortcut still collapse at once.
 - **Hover-to-expand checkbox**: upstream only offered it as a Terminal default.
   It now has a Preferences checkbox and takes effect without a relaunch.
 - **Clearing the shortcut removes it** from the preferences instead of storing
