@@ -1,8 +1,8 @@
-version: '3'
+version: "3"
 
 # Machine-local signing configuration. A missing file is not an error: the vars
 # below then fall back to ad-hoc signing. See .env.example.
-dotenv: ['.env.local']
+dotenv: [".env.local"]
 
 vars:
   PROJECT: Hidden Bar.xcodeproj
@@ -67,7 +67,7 @@ tasks:
       vars: [CONFIGURATION]
     vars:
       PRODUCTS_DIR:
-        sh: '{{.SHOW_BUILD_SETTINGS}} -configuration {{.CONFIGURATION}} | awk -F'' = '' ''/ BUILT_PRODUCTS_DIR = /{print $2; exit}'''
+        sh: "{{.SHOW_BUILD_SETTINGS}} -configuration {{.CONFIGURATION}} | awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $2; exit}'"
     cmds:
       - >-
         xcodebuild
@@ -99,7 +99,7 @@ tasks:
     deps: [build]
     vars:
       PRODUCTS_DIR:
-        sh: '{{.SHOW_BUILD_SETTINGS}} -configuration Debug-Direct | awk -F'' = '' ''/ BUILT_PRODUCTS_DIR = /{print $2; exit}'''
+        sh: "{{.SHOW_BUILD_SETTINGS}} -configuration Debug-Direct | awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $2; exit}'"
     cmds:
       - task: quit
       - open "{{.PRODUCTS_DIR}}/{{.APP_NAME}}"
@@ -110,7 +110,7 @@ tasks:
     deps: [build:release]
     vars:
       PRODUCTS_DIR:
-        sh: '{{.SHOW_BUILD_SETTINGS}} -configuration Release-Direct | awk -F'' = '' ''/ BUILT_PRODUCTS_DIR = /{print $2; exit}'''
+        sh: "{{.SHOW_BUILD_SETTINGS}} -configuration Release-Direct | awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $2; exit}'"
     cmds:
       - task: quit
       - rm -rf "{{.INSTALL_DIR}}/{{.APP_NAME}}"
